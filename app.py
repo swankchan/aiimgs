@@ -417,18 +417,6 @@ def save_library_uploads(files: Sequence[UploadedFile]) -> List[Path]:
 st.title("AI Image Similarity Search")
 load_index_into_session()
 
-# 強制保留滾動條空間以避免排版水平位移
-# 使用 `scrollbar-gutter: stable`（現代瀏覽器支援）來預留捲軸寬度，並以 overflow-y: scroll 作為後備
-_FORCE_SCROLLBAR_CSS = """
-<style>
-    /* 為整個頁面預留滾動條空間，避免在不同頁面高度下出現水平位移 */
-    html { scrollbar-gutter: stable both-edges; overflow-y: scroll; }
-    body { overflow-y: scroll; }
-    /* 若瀏覽器不支援 scrollbar-gutter，overflow-y: scroll 仍可強制顯示滾動條 */
-</style>
-"""
-st.markdown(_FORCE_SCROLLBAR_CSS, unsafe_allow_html=True)
-
 view_mode = st.sidebar.radio(
     "Navigation",
     ["Search", "Indexing", "Metadata"],
