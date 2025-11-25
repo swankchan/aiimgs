@@ -1,4 +1,38 @@
 {
+  "images\\0.jpg": {
+    "caption": "",
+    "keywords": []
+  },
+  "images\\17084 Studio City Phase 2_img1.jpg": {
+    "caption": "17084 Studio City Phase 2.pdf",
+    "keywords": [
+      "phase",
+      "design",
+      "macau",
+      "studio",
+      "city"
+    ]
+  },
+  "images\\17084 Studio City Phase 2_img2.jpg": {
+    "caption": "17084 Studio City Phase 2.pdf",
+    "keywords": [
+      "phase",
+      "design",
+      "macau",
+      "studio",
+      "city"
+    ]
+  },
+  "images\\17084 Studio City Phase 2_img3.jpg": {
+    "caption": "17084 Studio City Phase 2.pdf",
+    "keywords": [
+      "phase",
+      "design",
+      "macau",
+      "studio",
+      "city"
+    ]
+  },
   "images\\abhi-verma-Zv96GyrvZ8I-unsplash_638830.jpg": {
     "caption": "",
     "keywords": []
@@ -255,6 +289,15 @@
     "caption": "",
     "keywords": []
   },
+  "images\\testing photo.jpg": {
+    "caption": "世外",
+    "keywords": [
+      "海報",
+      "動畫",
+      "電影",
+      "香港"
+    ]
+  },
   "images\\theo-jacob-f3oaLQP6sFI-unsplash.jpg": {
     "caption": "",
     "keywords": []
@@ -299,17 +342,794 @@
     "caption": "",
     "keywords": []
   },
-  "images\\0.jpg": {
-    "caption": "",
-    "keywords": []
-  },
-  "images\\testing photo.jpg": {
-    "caption": "世外",
+  "images\\02057_HK Science Park Phase 2_Energy Towers_img1.jpg": {
+    "caption": "02057_HK Science Park Phase 2_Energy Towers.pdf",
     "keywords": [
-      "海報",
-      "動畫",
-      "電影",
-      "香港"
+      "award",
+      "hong",
+      "kong",
+      "building",
+      "towers"
+    ]
+  },
+  "images\\02057_HK Science Park Phase 2_Energy Towers_img2.jpg": {
+    "caption": "02057_HK Science Park Phase 2_Energy Towers.pdf",
+    "keywords": [
+      "award",
+      "hong",
+      "kong",
+      "building",
+      "towers"
+    ]
+  },
+  "images\\04037_Al Shaqab Academy_mlp_img1.jpg": {
+    "caption": "04037_Al Shaqab Academy_mlp.pdf",
+    "keywords": [
+      "project",
+      "award",
+      "design",
+      "architect",
+      "awards"
+    ]
+  },
+  "images\\04037_Al Shaqab Academy_mlp_img2.jpg": {
+    "caption": "04037_Al Shaqab Academy_mlp.pdf",
+    "keywords": [
+      "project",
+      "award",
+      "design",
+      "architect",
+      "awards"
+    ]
+  },
+  "images\\04037_Al Shaqab Academy_mlp_img3.jpg": {
+    "caption": "04037_Al Shaqab Academy_mlp.pdf",
+    "keywords": [
+      "project",
+      "award",
+      "design",
+      "architect",
+      "awards"
+    ]
+  },
+  "images\\04037_Al Shaqab Academy_mlp_img4.jpg": {
+    "caption": "04037_Al Shaqab Academy_mlp.pdf",
+    "keywords": [
+      "project",
+      "award",
+      "design",
+      "architect",
+      "awards"
+    ]
+  },
+  "images\\04037_Al Shaqab Academy_mlp_img5.jpg": {
+    "caption": "04037_Al Shaqab Academy_mlp.pdf",
+    "keywords": [
+      "project",
+      "award",
+      "design",
+      "architect",
+      "awards"
+    ]
+  },
+  "images\\04037_Al Shaqab Academy_mlp_img6.jpg": {
+    "caption": "04037_Al Shaqab Academy_mlp.pdf",
+    "keywords": [
+      "project",
+      "award",
+      "design",
+      "architect",
+      "awards"
+    ]
+  },
+  "images\\04037_Al Shaqab Academy_mlp_img7.jpg": {
+    "caption": "04037_Al Shaqab Academy_mlp.pdf",
+    "keywords": [
+      "project",
+      "award",
+      "design",
+      "architect",
+      "awards"
+    ]
+  },
+  "images\\04037_Al Shaqab Academy_mlp_img8.jpg": {
+    "caption": "04037_Al Shaqab Academy_mlp.pdf",
+    "keywords": [
+      "project",
+      "award",
+      "design",
+      "architect",
+      "awards"
+    ]
+  },
+  "images\\05031_Xing Long International Plaza_img1.jpg": {
+    "caption": "05031_Xing Long International Plaza.pdf",
+    "keywords": [
+      "retail",
+      "beijing",
+      "long",
+      "architect",
+      "xing"
+    ]
+  },
+  "images\\05031_Xing Long International Plaza_img2.jpg": {
+    "caption": "05031_Xing Long International Plaza.pdf",
+    "keywords": [
+      "retail",
+      "beijing",
+      "long",
+      "architect",
+      "xing"
+    ]
+  },
+  "images\\05031_Xing Long International Plaza_img3.jpg": {
+    "caption": "05031_Xing Long International Plaza.pdf",
+    "keywords": [
+      "retail",
+      "beijing",
+      "long",
+      "architect",
+      "xing"
+    ]
+  },
+  "images\\05031_Xing Long International Plaza_img4.jpg": {
+    "caption": "05031_Xing Long International Plaza.pdf",
+    "keywords": [
+      "retail",
+      "beijing",
+      "long",
+      "architect",
+      "xing"
+    ]
+  },
+  "images\\06010_SCFA_img1.jpg": {
+    "caption": "06010_SCFA.pdf",
+    "keywords": [
+      "project",
+      "doha",
+      "qatar",
+      "hong",
+      "kong"
+    ]
+  },
+  "images\\06010_SCFA_img2.jpg": {
+    "caption": "06010_SCFA.pdf",
+    "keywords": [
+      "project",
+      "doha",
+      "qatar",
+      "hong",
+      "kong"
+    ]
+  },
+  "images\\06010_SCFA_img3.jpg": {
+    "caption": "06010_SCFA.pdf",
+    "keywords": [
+      "project",
+      "doha",
+      "qatar",
+      "hong",
+      "kong"
+    ]
+  },
+  "images\\06010_SCFA_img4.jpg": {
+    "caption": "06010_SCFA.pdf",
+    "keywords": [
+      "project",
+      "doha",
+      "qatar",
+      "hong",
+      "kong"
+    ]
+  },
+  "images\\10042B_HKJC Shatin Stables Refurbishment_img1.jpg": {
+    "caption": "10042B_HKJC Shatin Stables Refurbishment.pdf",
+    "keywords": [
+      "hong",
+      "kong",
+      "shatin",
+      "stables",
+      "refurbishment"
+    ]
+  },
+  "images\\10042B_HKJC Shatin Stables Refurbishment_img2.jpg": {
+    "caption": "10042B_HKJC Shatin Stables Refurbishment.pdf",
+    "keywords": [
+      "hong",
+      "kong",
+      "shatin",
+      "stables",
+      "refurbishment"
+    ]
+  },
+  "images\\10042B_HKJC Shatin Stables Refurbishment_img3.jpg": {
+    "caption": "10042B_HKJC Shatin Stables Refurbishment.pdf",
+    "keywords": [
+      "hong",
+      "kong",
+      "shatin",
+      "stables",
+      "refurbishment"
+    ]
+  },
+  "images\\12002_Guangzhou CTF Tower_img1.jpg": {
+    "caption": "12002_Guangzhou CTF Tower.pdf",
+    "keywords": [
+      "hotel",
+      "awards",
+      "guangzhou",
+      "china",
+      "asia"
+    ]
+  },
+  "images\\12002_Guangzhou CTF Tower_img2.jpg": {
+    "caption": "12002_Guangzhou CTF Tower.pdf",
+    "keywords": [
+      "hotel",
+      "awards",
+      "guangzhou",
+      "china",
+      "asia"
+    ]
+  },
+  "images\\12068_St. Paul's Primary Catholic School_int_img1.jpg": {
+    "caption": "12068_St. Paul's Primary Catholic School_int.pdf",
+    "keywords": [
+      "school",
+      "primary",
+      "paul",
+      "catholic",
+      "extension"
+    ]
+  },
+  "images\\12068_St. Paul's Primary Catholic School_int_img2.jpg": {
+    "caption": "12068_St. Paul's Primary Catholic School_int.pdf",
+    "keywords": [
+      "school",
+      "primary",
+      "paul",
+      "catholic",
+      "extension"
+    ]
+  },
+  "images\\12068_St. Paul's Primary Catholic School_int_img3.jpg": {
+    "caption": "12068_St. Paul's Primary Catholic School_int.pdf",
+    "keywords": [
+      "school",
+      "primary",
+      "paul",
+      "catholic",
+      "extension"
+    ]
+  },
+  "images\\12068_St. Paul's Primary Catholic School_int_img4.jpg": {
+    "caption": "12068_St. Paul's Primary Catholic School_int.pdf",
+    "keywords": [
+      "school",
+      "primary",
+      "paul",
+      "catholic",
+      "extension"
+    ]
+  },
+  "images\\14022_EDB Special Aided Schools_img1.jpg": {
+    "caption": "14022_EDB Special Aided Schools.pdf",
+    "keywords": [
+      "works",
+      "hong",
+      "kong",
+      "special",
+      "aided"
+    ]
+  },
+  "images\\14022_EDB Special Aided Schools_img2.jpg": {
+    "caption": "14022_EDB Special Aided Schools.pdf",
+    "keywords": [
+      "works",
+      "hong",
+      "kong",
+      "special",
+      "aided"
+    ]
+  },
+  "images\\14022_EDB Special Aided Schools_img3.jpg": {
+    "caption": "14022_EDB Special Aided Schools.pdf",
+    "keywords": [
+      "works",
+      "hong",
+      "kong",
+      "special",
+      "aided"
+    ]
+  },
+  "images\\14147_Ningbo Water Show Theatre & Commercial Development_img1.jpg": {
+    "caption": "14147_Ningbo Water Show Theatre & Commercial Development.pdf",
+    "keywords": [
+      "theatre",
+      "space",
+      "water",
+      "show",
+      "project"
+    ]
+  },
+  "images\\14147_Ningbo Water Show Theatre & Commercial Development_img2.jpg": {
+    "caption": "14147_Ningbo Water Show Theatre & Commercial Development.pdf",
+    "keywords": [
+      "theatre",
+      "space",
+      "water",
+      "show",
+      "project"
+    ]
+  },
+  "images\\14147_Ningbo Water Show Theatre & Commercial Development_img3.jpg": {
+    "caption": "14147_Ningbo Water Show Theatre & Commercial Development.pdf",
+    "keywords": [
+      "theatre",
+      "space",
+      "water",
+      "show",
+      "project"
+    ]
+  },
+  "images\\14147_Ningbo Water Show Theatre & Commercial Development_img4.jpg": {
+    "caption": "14147_Ningbo Water Show Theatre & Commercial Development.pdf",
+    "keywords": [
+      "theatre",
+      "space",
+      "water",
+      "show",
+      "project"
+    ]
+  },
+  "images\\15112_Kai Tak Sports Park_ch_img1.jpg": {
+    "caption": "15112_Kai Tak Sports Park_ch.pdf",
+    "keywords": [
+      "绿建环评",
+      "新建建筑",
+      "暂定铂金级认证",
+      "香港建筑师学会年奖",
+      "人类及社会共融"
+    ]
+  },
+  "images\\15112_Kai Tak Sports Park_ch_img2.jpg": {
+    "caption": "15112_Kai Tak Sports Park_ch.pdf",
+    "keywords": [
+      "绿建环评",
+      "新建建筑",
+      "暂定铂金级认证",
+      "香港建筑师学会年奖",
+      "人类及社会共融"
+    ]
+  },
+  "images\\15112_Kai Tak Sports Park_ch_img3.jpg": {
+    "caption": "15112_Kai Tak Sports Park_ch.pdf",
+    "keywords": [
+      "绿建环评",
+      "新建建筑",
+      "暂定铂金级认证",
+      "香港建筑师学会年奖",
+      "人类及社会共融"
+    ]
+  },
+  "images\\15112_Kai Tak Sports Park_ch_img4.jpg": {
+    "caption": "15112_Kai Tak Sports Park_ch.pdf",
+    "keywords": [
+      "绿建环评",
+      "新建建筑",
+      "暂定铂金级认证",
+      "香港建筑师学会年奖",
+      "人类及社会共融"
+    ]
+  },
+  "images\\15112_Kai Tak Sports Park_img1.jpg": {
+    "caption": "15112_Kai Tak Sports Park.pdf",
+    "keywords": [
+      "sports",
+      "award",
+      "hong",
+      "kong",
+      "awards"
+    ]
+  },
+  "images\\15112_Kai Tak Sports Park_img2.jpg": {
+    "caption": "15112_Kai Tak Sports Park.pdf",
+    "keywords": [
+      "sports",
+      "award",
+      "hong",
+      "kong",
+      "awards"
+    ]
+  },
+  "images\\15112_Kai Tak Sports Park_img3.jpg": {
+    "caption": "15112_Kai Tak Sports Park.pdf",
+    "keywords": [
+      "sports",
+      "award",
+      "hong",
+      "kong",
+      "awards"
+    ]
+  },
+  "images\\15112_Kai Tak Sports Park_img4.jpg": {
+    "caption": "15112_Kai Tak Sports Park.pdf",
+    "keywords": [
+      "sports",
+      "award",
+      "hong",
+      "kong",
+      "awards"
+    ]
+  },
+  "images\\16050_Footbridges at Chek Lap Kok_img1.jpg": {
+    "caption": "16050_Footbridges at Chek Lap Kok.pdf",
+    "keywords": [
+      "design",
+      "hong",
+      "kong",
+      "consultancy",
+      "north"
+    ]
+  },
+  "images\\16050_Footbridges at Chek Lap Kok_img2.jpg": {
+    "caption": "16050_Footbridges at Chek Lap Kok.pdf",
+    "keywords": [
+      "design",
+      "hong",
+      "kong",
+      "consultancy",
+      "north"
+    ]
+  },
+  "images\\16050_Footbridges at Chek Lap Kok_img3.jpg": {
+    "caption": "16050_Footbridges at Chek Lap Kok.pdf",
+    "keywords": [
+      "design",
+      "hong",
+      "kong",
+      "consultancy",
+      "north"
+    ]
+  },
+  "images\\16050_Footbridges at Chek Lap Kok_img4.jpg": {
+    "caption": "16050_Footbridges at Chek Lap Kok.pdf",
+    "keywords": [
+      "design",
+      "hong",
+      "kong",
+      "consultancy",
+      "north"
+    ]
+  },
+  "images\\18078_HKUST_Student Residence Development_2pages_img1.jpg": {
+    "caption": "18078_HKUST_Student Residence Development_2pages.pdf",
+    "keywords": [
+      "students",
+      "hong",
+      "kong",
+      "residence",
+      "university"
+    ]
+  },
+  "images\\18078_HKUST_Student Residence Development_2pages_img2.jpg": {
+    "caption": "18078_HKUST_Student Residence Development_2pages.pdf",
+    "keywords": [
+      "students",
+      "hong",
+      "kong",
+      "residence",
+      "university"
+    ]
+  },
+  "images\\18078_HKUST_Student Residence Development_2pages_img3.jpg": {
+    "caption": "18078_HKUST_Student Residence Development_2pages.pdf",
+    "keywords": [
+      "students",
+      "hong",
+      "kong",
+      "residence",
+      "university"
+    ]
+  },
+  "images\\18078_HKUST_Student Residence Development_2pages_img4.jpg": {
+    "caption": "18078_HKUST_Student Residence Development_2pages.pdf",
+    "keywords": [
+      "students",
+      "hong",
+      "kong",
+      "residence",
+      "university"
+    ]
+  },
+  "images\\18078_HKUST_Student Residence Development_2pages_img5.jpg": {
+    "caption": "18078_HKUST_Student Residence Development_2pages.pdf",
+    "keywords": [
+      "students",
+      "hong",
+      "kong",
+      "residence",
+      "university"
+    ]
+  },
+  "images\\18078_HKUST_Student Residence Development_2pages_img6.jpg": {
+    "caption": "18078_HKUST_Student Residence Development_2pages.pdf",
+    "keywords": [
+      "students",
+      "hong",
+      "kong",
+      "residence",
+      "university"
+    ]
+  },
+  "images\\18078_HKUST_Student Residence Development_2pages_img7.jpg": {
+    "caption": "18078_HKUST_Student Residence Development_2pages.pdf",
+    "keywords": [
+      "students",
+      "hong",
+      "kong",
+      "residence",
+      "university"
+    ]
+  },
+  "images\\19141_Metro Line 5 Guniang Bridge Station Project_img1.jpg": {
+    "caption": "19141_Metro Line 5 Guniang Bridge Station Project.pdf",
+    "keywords": [
+      "design",
+      "hangzhou",
+      "station",
+      "metro",
+      "commercial"
+    ]
+  },
+  "images\\19141_Metro Line 5 Guniang Bridge Station Project_img2.jpg": {
+    "caption": "19141_Metro Line 5 Guniang Bridge Station Project.pdf",
+    "keywords": [
+      "design",
+      "hangzhou",
+      "station",
+      "metro",
+      "commercial"
+    ]
+  },
+  "images\\19141_Metro Line 5 Guniang Bridge Station Project_img3.jpg": {
+    "caption": "19141_Metro Line 5 Guniang Bridge Station Project.pdf",
+    "keywords": [
+      "design",
+      "hangzhou",
+      "station",
+      "metro",
+      "commercial"
+    ]
+  },
+  "images\\19141_Metro Line 5 Guniang Bridge Station Project_img4.jpg": {
+    "caption": "19141_Metro Line 5 Guniang Bridge Station Project.pdf",
+    "keywords": [
+      "design",
+      "hangzhou",
+      "station",
+      "metro",
+      "commercial"
+    ]
+  },
+  "images\\19141_Metro Line 5 Guniang Bridge Station Project_img5.jpg": {
+    "caption": "19141_Metro Line 5 Guniang Bridge Station Project.pdf",
+    "keywords": [
+      "design",
+      "hangzhou",
+      "station",
+      "metro",
+      "commercial"
+    ]
+  },
+  "images\\20054_K11 Shanghai_img1.jpg": {
+    "caption": "20054_K11 Shanghai.pdf",
+    "keywords": [
+      "project",
+      "design",
+      "office",
+      "architect",
+      "tower"
+    ]
+  },
+  "images\\20054_K11 Shanghai_img2.jpg": {
+    "caption": "20054_K11 Shanghai.pdf",
+    "keywords": [
+      "project",
+      "design",
+      "office",
+      "architect",
+      "tower"
+    ]
+  },
+  "images\\20054_K11 Shanghai_img3.jpg": {
+    "caption": "20054_K11 Shanghai.pdf",
+    "keywords": [
+      "project",
+      "design",
+      "office",
+      "architect",
+      "tower"
+    ]
+  },
+  "images\\20054_K11 Shanghai_img4.jpg": {
+    "caption": "20054_K11 Shanghai.pdf",
+    "keywords": [
+      "project",
+      "design",
+      "office",
+      "architect",
+      "tower"
+    ]
+  },
+  "images\\23004_Shenyang Office Project_img1.jpg": {
+    "caption": "23004_Shenyang Office Project.pdf",
+    "keywords": [
+      "project",
+      "design",
+      "shenyang",
+      "office",
+      "interior"
+    ]
+  },
+  "images\\23004_Shenyang Office Project_img2.jpg": {
+    "caption": "23004_Shenyang Office Project.pdf",
+    "keywords": [
+      "project",
+      "design",
+      "shenyang",
+      "office",
+      "interior"
+    ]
+  },
+  "images\\23004_Shenyang Office Project_img3.jpg": {
+    "caption": "23004_Shenyang Office Project.pdf",
+    "keywords": [
+      "project",
+      "design",
+      "shenyang",
+      "office",
+      "interior"
+    ]
+  },
+  "images\\23004_Shenyang Office Project_img4.jpg": {
+    "caption": "23004_Shenyang Office Project.pdf",
+    "keywords": [
+      "project",
+      "design",
+      "shenyang",
+      "office",
+      "interior"
+    ]
+  },
+  "images\\23015_CUHK_CCSDC_Living Room Int_img1.jpg": {
+    "caption": "23015_CUHK_CCSDC_Living Room Int.pdf",
+    "keywords": [
+      "college",
+      "living",
+      "room",
+      "hong",
+      "kong"
+    ]
+  },
+  "images\\23015_CUHK_CCSDC_Living Room Int_img2.jpg": {
+    "caption": "23015_CUHK_CCSDC_Living Room Int.pdf",
+    "keywords": [
+      "college",
+      "living",
+      "room",
+      "hong",
+      "kong"
+    ]
+  },
+  "images\\23015_CUHK_CCSDC_Living Room Int_img3.jpg": {
+    "caption": "23015_CUHK_CCSDC_Living Room Int.pdf",
+    "keywords": [
+      "college",
+      "living",
+      "room",
+      "hong",
+      "kong"
+    ]
+  },
+  "images\\23015_CUHK_CCSDC_Living Room Int_img4.jpg": {
+    "caption": "23015_CUHK_CCSDC_Living Room Int.pdf",
+    "keywords": [
+      "college",
+      "living",
+      "room",
+      "hong",
+      "kong"
+    ]
+  },
+  "images\\A&A Data Centre (16151, 16116, 17028, 17067)_img1.jpg": {
+    "caption": "A&A Data Centre (16151, 16116, 17028, 17067).pdf",
+    "keywords": [
+      "centre",
+      "data",
+      "authorized",
+      "person",
+      "hong"
+    ]
+  },
+  "images\\A&A Data Centre (16151, 16116, 17028, 17067)_img2.jpg": {
+    "caption": "A&A Data Centre (16151, 16116, 17028, 17067).pdf",
+    "keywords": [
+      "centre",
+      "data",
+      "authorized",
+      "person",
+      "hong"
+    ]
+  },
+  "images\\A&A Data Centre (16151, 16116, 17028, 17067)_img3.jpg": {
+    "caption": "A&A Data Centre (16151, 16116, 17028, 17067).pdf",
+    "keywords": [
+      "centre",
+      "data",
+      "authorized",
+      "person",
+      "hong"
+    ]
+  },
+  "images\\A&A Data Centre (16151, 16116, 17028, 17067)_img4.jpg": {
+    "caption": "A&A Data Centre (16151, 16116, 17028, 17067).pdf",
+    "keywords": [
+      "centre",
+      "data",
+      "authorized",
+      "person",
+      "hong"
+    ]
+  },
+  "images\\Raycom City_overall_img1.jpg": {
+    "caption": "Raycom City_overall.pdf",
+    "keywords": [
+      "lot",
+      "area",
+      "design",
+      "sqm",
+      "city"
+    ]
+  },
+  "images\\Raycom City_overall_img2.jpg": {
+    "caption": "Raycom City_overall.pdf",
+    "keywords": [
+      "lot",
+      "area",
+      "design",
+      "sqm",
+      "city"
+    ]
+  },
+  "images\\Raycom City_overall_img3.jpg": {
+    "caption": "Raycom City_overall.pdf",
+    "keywords": [
+      "lot",
+      "area",
+      "design",
+      "sqm",
+      "city"
+    ]
+  },
+  "images\\Raycom City_overall_img4.jpg": {
+    "caption": "Raycom City_overall.pdf",
+    "keywords": [
+      "lot",
+      "area",
+      "design",
+      "sqm",
+      "city"
+    ]
+  },
+  "images\\Raycom City_overall_img5.jpg": {
+    "caption": "Raycom City_overall.pdf",
+    "keywords": [
+      "lot",
+      "area",
+      "design",
+      "sqm",
+      "city"
     ]
   }
 }
