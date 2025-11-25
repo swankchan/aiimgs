@@ -4,6 +4,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import Callable, Iterable, List, Sequence, Tuple, Dict, Optional
 import json
+from io import BytesIO
 
 import faiss  # FAISS 向量搜尋庫
 import numpy as np
@@ -12,6 +13,16 @@ import streamlit as st  # 網頁應用框架
 import torch  # PyTorch 深度學習框架
 from PIL import Image  # 圖像處理
 from streamlit.runtime.uploaded_file_manager import UploadedFile
+
+# PDF 處理相關
+try:
+    import PyPDF2
+    from pdf2image import convert_from_bytes
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
+import PyPDF2  # PDF 文件處理
+from pdf2image import convert_from_bytes  # PDF 轉換為圖像
 
 # ===== 設定常數 =====
 IMAGE_FOLDERS = [Path("images")]  # 圖像儲存資料夾
@@ -413,6 +424,73 @@ def save_library_uploads(files: Sequence[UploadedFile]) -> List[Path]:
     return saved
 
 
+# ===== PDF 處理函數 =====
+def extract_images_from_pdf(pdf_file: UploadedFile, output_folder: Path) -> Tuple[List[Path], str]:
+    """
+    從 PDF 擷取所有頁面圖片並存檔
+    
+    參數:
+        pdf_file: 上傳的 PDF 檔案
+        output_folder: 圖片輸出資料夾
+    
+    返回:
+        (圖片路徑列表, PDF 檔案名稱)
+    """
+    if not PDF_SUPPORT:
+        raise ImportError("PDF support not available. Install PyPDF2 and pdf2image.")
+    
+    pdf_filename = Path(pdf_file.name).stem  # PDF 檔名（無副檔名）
+    pdf_bytes = pdf_file.read()
+    
+    # 使用 pdf2image 將每頁轉換為圖片
+    images = convert_from_bytes(pdf_bytes)
+    image_paths: List[Path] = []
+    
+    output_folder.mkdir(parents=True, exist_ok=True)
+    
+    for page_idx, img in enumerate(images, start=1):
+        # 圖片檔名格式: pdfname_page1.jpg, pdfname_page2.jpg ...
+        img_filename = f"{pdf_filename}_page{page_idx}.jpg"
+        img_path = output_folder / img_filename
+        
+        # 避免重複檔名
+        counter = 1
+        while img_path.exists():
+            img_filename = f"{pdf_filename}_page{page_idx}_{counter}.jpg"
+            img_path = output_folder / img_filename
+            counter += 1
+        
+        img.save(img_path, "JPEG", quality=85)
+        image_paths.append(img_path)
+    
+    return image_paths, pdf_filename
+
+
+def extract_text_from_pdf(pdf_file: UploadedFile) -> str:
+    """
+    從 PDF 擷取所有文字
+    
+    參數:
+        pdf_file: 上傳的 PDF 檔案
+    
+    返回:
+        擷取的文字內容
+    """
+    if not PDF_SUPPORT:
+        raise ImportError("PDF support not available. Install PyPDF2.")
+    
+    pdf_bytes = pdf_file.read()
+    pdf_reader = PyPDF2.PdfReader(BytesIO(pdf_bytes))
+    
+    all_text = []
+    for page in pdf_reader.pages:
+        text = page.extract_text()
+        if text:
+            all_text.append(text)
+    
+    return "\n\n".join(all_text)
+
+
 # ===== Streamlit UI 應用程式 =====
 st.title("AI Image Similarity Search")
 load_index_into_session()
@@ -436,6 +514,133 @@ elif st.session_state["last_view_mode"] != view_mode:
 
 if view_mode == "Indexing":
     st.subheader("Index management")
+    
+    # ===== PDF 上傳與圖片擷取 =====
+    if PDF_SUPPORT:
+        st.markdown("### 📄 Extract Images from PDF")
+        pdf_files = st.file_uploader(
+            "Upload PDF files to extract images",
+            type=["pdf"],
+            accept_multiple_files=True,
+            help="Upload one or more PDF files. Images will be extracted from each page."
+        )
+        
+        if pdf_files and st.button("Extract images from PDF"):
+            output_folder = IMAGE_FOLDERS[0]
+            
+            with st.spinner("Processing PDF files..."):
+                all_extracted_images = []
+                all_pdf_data = []  # [(image_paths, pdf_filename, extracted_text)]
+                
+                for pdf_file in pdf_files:
+                    try:
+                        st.info(f"Processing: {pdf_file.name}")
+                        
+                        # 擷取圖片
+                        image_paths, pdf_filename = extract_images_from_pdf(pdf_file, output_folder)
+                        
+                        # 擷取文字
+                        pdf_file.seek(0)  # 重置檔案指針
+                        extracted_text = extract_text_from_pdf(pdf_file)
+                        
+                        all_extracted_images.extend(image_paths)
+                        all_pdf_data.append({
+                            "image_paths": image_paths,
+                            "pdf_filename": pdf_filename,
+                            "extracted_text": extracted_text
+                        })
+                        
+                        st.success(f"✓ Extracted {len(image_paths)} images from {pdf_file.name}")
+                    
+                    except Exception as e:
+                        st.error(f"✗ Error processing {pdf_file.name}: {str(e)}")
+                
+                if all_extracted_images:
+                    st.session_state["pdf_extracted_data"] = all_pdf_data
+                    st.session_state["pdf_keywords_input"] = {}
+                    st.success(f"Total: {len(all_extracted_images)} images extracted. Scroll down to add keywords.")
+        
+        # ===== Keywords 揀選介面 =====
+        if "pdf_extracted_data" in st.session_state:
+            st.markdown("### 🏷️ Add Keywords for Extracted Images")
+            st.info("Review extracted text and enter keywords for each image. The PDF filename will be used as the caption.")
+            
+            for pdf_data in st.session_state["pdf_extracted_data"]:
+                pdf_filename = pdf_data["pdf_filename"]
+                image_paths = pdf_data["image_paths"]
+                extracted_text = pdf_data["extracted_text"]
+                
+                st.markdown(f"#### PDF: `{pdf_filename}.pdf`")
+                
+                # 顯示擷取的文字（讓用戶參考）
+                with st.expander("📝 Extracted text from PDF (for reference)", expanded=False):
+                    st.text_area(
+                        "Text content",
+                        value=extracted_text[:2000] + ("..." if len(extracted_text) > 2000 else ""),
+                        height=200,
+                        disabled=True,
+                        key=f"text_preview_{pdf_filename}"
+                    )
+                
+                # 為每張圖片輸入 keywords
+                cols = st.columns(2)
+                for idx, img_path in enumerate(image_paths):
+                    col = cols[idx % 2]
+                    with col:
+                        try:
+                            st.image(str(img_path), caption=img_path.name, width=250)
+                        except:
+                            st.warning(f"Cannot preview: {img_path.name}")
+                        
+                        keywords_key = f"keywords_{pdf_filename}_{idx}"
+                        keywords_input = st.text_input(
+                            f"Keywords for {img_path.name}",
+                            key=keywords_key,
+                            placeholder="keyword1, keyword2, keyword3",
+                            help="Enter comma-separated keywords"
+                        )
+                        
+                        st.session_state["pdf_keywords_input"][str(img_path)] = keywords_input
+                
+                st.divider()
+            
+            # 保存所有 metadata
+            if st.button("💾 Save all metadata and finish", type="primary"):
+                metadata = load_all_metadata()
+                
+                for pdf_data in st.session_state["pdf_extracted_data"]:
+                    pdf_filename = pdf_data["pdf_filename"]
+                    image_paths = pdf_data["image_paths"]
+                    
+                    for img_path in image_paths:
+                        img_path_str = str(img_path)
+                        keywords_input = st.session_state["pdf_keywords_input"].get(img_path_str, "")
+                        keywords_list = [k.strip() for k in keywords_input.split(",") if k.strip()]
+                        
+                        # 正規化路徑
+                        norm_path = normalize_path_key(img_path_str)
+                        
+                        # caption 使用 PDF 檔名
+                        metadata[norm_path] = {
+                            "caption": f"{pdf_filename}.pdf",
+                            "keywords": keywords_list
+                        }
+                
+                save_metadata_file(metadata)
+                st.session_state["metadata"] = metadata
+                
+                # 清理臨時資料
+                del st.session_state["pdf_extracted_data"]
+                del st.session_state["pdf_keywords_input"]
+                
+                st.success("✓ All metadata saved successfully! You can now run 'Sync selected folders' to index these images.")
+                st.rerun()
+    else:
+        st.warning("PDF support not available. Install PyPDF2 and pdf2image to enable this feature.")
+    
+    st.divider()
+    
+    # ===== 原有的圖片上傳功能 =====
     upload_candidates = st.file_uploader(
         "Add new images to the gallery (multiple files allowed)",
         type=list({ext.replace(".", "") for ext in IMAGE_EXTS}),
