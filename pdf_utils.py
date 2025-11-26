@@ -1,0 +1,374 @@
+"""PDF processing utilities for image extraction and text analysis."""
+
+import re
+from collections import Counter
+from io import BytesIO
+from pathlib import Path
+from typing import List, Tuple, Dict, Optional
+import json
+
+import streamlit as st
+from PIL import Image
+from streamlit.runtime.uploaded_file_manager import UploadedFile
+
+# PDF processing related
+try:
+    import PyPDF2
+    import fitz  # PyMuPDF
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
+
+# AI analysis support
+try:
+    import requests
+    AI_SUPPORT = True
+except ImportError:
+    AI_SUPPORT = False
+
+
+def save_pdf_to_catalog(pdf_file: UploadedFile, catalog_folder: Path) -> Path:
+    """
+    Save uploaded PDF to catalog folder
+    
+    Args:
+        pdf_file: Uploaded PDF file
+        catalog_folder: Target folder for PDF storage
+    
+    Returns:
+        Path to saved PDF file
+    """
+    catalog_folder.mkdir(parents=True, exist_ok=True)
+    
+    pdf_filename = Path(pdf_file.name).name
+    dest_path = catalog_folder / pdf_filename
+    
+    # Avoid duplicate filenames
+    counter = 1
+    stem = Path(pdf_file.name).stem
+    while dest_path.exists():
+        dest_path = catalog_folder / f"{stem}_{counter}.pdf"
+        counter += 1
+    
+    # Save PDF
+    with open(dest_path, "wb") as f:
+        f.write(pdf_file.read())
+    
+    return dest_path
+
+
+def extract_images_from_pdf(
+    pdf_file: UploadedFile, 
+    output_folder: Path,
+    jpeg_quality: int = 85
+) -> Tuple[List[Path], str]:
+    """
+    Extract all embedded images from PDF and save them
+    
+    Args:
+        pdf_file: Uploaded PDF file
+        output_folder: Image output folder
+        jpeg_quality: JPEG quality for saved images
+    
+    Returns:
+        (List of image paths, PDF filename)
+    """
+    if not PDF_SUPPORT:
+        raise ImportError("PDF support not available. Install PyMuPDF (fitz).")
+    
+    pdf_filename = Path(pdf_file.name).stem  # PDF filename (without extension)
+    pdf_bytes = pdf_file.read()
+    
+    # Open PDF using PyMuPDF
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    image_paths: List[Path] = []
+    
+    output_folder.mkdir(parents=True, exist_ok=True)
+    
+    img_counter = 1
+    
+    # Iterate through each page
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        
+        # Get all images on the page
+        image_list = page.get_images(full=True)
+        
+        for img_index, img_info in enumerate(image_list):
+            xref = img_info[0]  # Image xref number
+            
+            try:
+                # Extract image
+                base_image = doc.extract_image(xref)
+                image_bytes = base_image["image"]
+                image_ext = base_image["ext"]  # Image format (png, jpeg, etc.)
+                
+                # Convert to PIL Image
+                img = Image.open(BytesIO(image_bytes))
+                
+                # Image filename format: pdfname_img1.jpg, pdfname_img2.jpg ...
+                img_filename = f"{pdf_filename}_img{img_counter}.jpg"
+                img_path = output_folder / img_filename
+                
+                # Avoid duplicate filenames
+                counter = 1
+                while img_path.exists():
+                    img_filename = f"{pdf_filename}_img{img_counter}_{counter}.jpg"
+                    img_path = output_folder / img_filename
+                    counter += 1
+                
+                # Save as JPEG
+                if img.mode in ("RGBA", "LA", "P"):
+                    # Convert transparent background to white
+                    background = Image.new("RGB", img.size, (255, 255, 255))
+                    if img.mode == "P":
+                        img = img.convert("RGBA")
+                    background.paste(img, mask=img.split()[-1] if img.mode in ("RGBA", "LA") else None)
+                    img = background
+                elif img.mode != "RGB":
+                    img = img.convert("RGB")
+                
+                img.save(img_path, "JPEG", quality=jpeg_quality)
+                image_paths.append(img_path)
+                img_counter += 1
+                
+            except Exception as e:
+                st.warning(f"Unable to extract image (page {page_num + 1}, img {img_index + 1}): {str(e)}")
+                continue
+    
+    doc.close()
+    
+    return image_paths, pdf_filename
+
+
+def extract_text_from_pdf(pdf_file: UploadedFile) -> str:
+    """
+    Extract all text from PDF
+    
+    Args:
+        pdf_file: Uploaded PDF file
+    
+    Returns:
+        Extracted text content
+    """
+    if not PDF_SUPPORT:
+        raise ImportError("PDF support not available. Install PyPDF2.")
+    
+    pdf_bytes = pdf_file.read()
+    pdf_reader = PyPDF2.PdfReader(BytesIO(pdf_bytes))
+    
+    all_text = []
+    for page in pdf_reader.pages:
+        text = page.extract_text()
+        if text:
+            all_text.append(text)
+    
+    return "\n\n".join(all_text)
+
+
+def extract_keywords_from_text(text: str, max_keywords: int = 5, ai_info: Optional[Dict[str, str]] = None) -> List[str]:
+    """
+    Extract keywords from text, prioritizing important project information
+    
+    Args:
+        text: Text content
+        max_keywords: Maximum number of keywords to return
+        ai_info: AI extracted information (Client, Location, Contractor, Date, Role)
+    
+    Returns:
+        List of keywords with important project info first
+    """
+    keywords = []
+    
+    # Priority 1: Add AI extracted structured information
+    if ai_info:
+        priority_fields = ["client", "location", "contractor", "role", "date_of_completion"]
+        for field in priority_fields:
+            value = ai_info.get(field, "")
+            if value and value != "Not found":
+                # Split compound names and add meaningful parts
+                parts = value.replace(",", " ").replace("Ltd", "").replace("Limited", "").split()
+                for part in parts:
+                    cleaned = part.strip("()[]")
+                    if len(cleaned) > 2 and cleaned.lower() not in ["not", "found"]:
+                        keywords.append(cleaned)
+    
+    # Priority 2: Extract additional keywords from text
+    # Common stop words (English and Chinese)
+    stop_words = {
+        "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "from",
+        "is", "are", "was", "were", "be", "been", "being", "have", "has", "had", "do", "does", "did",
+        "will", "would", "could", "should", "may", "might", "can", "this", "that", "these", "those",
+        "i", "you", "he", "she", "it", "we", "they", "them", "their", "its", "our", "your",
+        "的", "了", "在", "是", "我", "有", "和", "就", "不", "人", "都", "一", "個", "上", "也", "說",
+        "出", "到", "時", "要", "以", "用", "著", "能", "之", "會", "後", "然", "沒", "很", "好", "來",
+        "page", "pages", "document", "file", "pdf", "image", "fig", "figure"
+    }
+    
+    # Remove special characters, keep letters, numbers, Chinese
+    text_lower = text.lower()
+    words = re.findall(r'\b\w+\b', text_lower)
+    
+    # Filter stop words and words that are too short
+    filtered_words = [
+        word for word in words 
+        if len(word) >= 3 and word not in stop_words
+    ]
+    
+    # Count word frequency
+    word_counts = Counter(filtered_words)
+    
+    # Get most common keywords
+    top_keywords = [word for word, count in word_counts.most_common(max_keywords * 2)]
+    
+    # Filter out pure numbers and words already in AI keywords
+    existing_lower = {k.lower() for k in keywords}
+    additional = [kw for kw in top_keywords 
+                  if not kw.isdigit() and kw.lower() not in existing_lower]
+    
+    keywords.extend(additional)
+    
+    # Return unique keywords, up to max_keywords * 2 to account for structured info
+    seen = set()
+    unique_keywords = []
+    for kw in keywords:
+        if kw.lower() not in seen:
+            seen.add(kw.lower())
+            unique_keywords.append(kw)
+    
+    return unique_keywords[:max_keywords * 2]
+
+
+def analyze_pdf_with_ai(
+    text: str,
+    custom_fields: Optional[List[str]] = None,
+    ollama_url: str = "http://localhost:11434",
+    model: str = "gemma3:1b"
+) -> Dict[str, str]:
+    """
+    Use local AI (Ollama) to intelligently analyze PDF content and extract information
+    Works even without explicit labels like "Project Name:" or "Location:"
+    
+    Args:
+        text: PDF text content
+        custom_fields: List of fields to extract (e.g., ["Location", "Client", "Role", "Project Name"])
+        ollama_url: Ollama API URL (default: http://localhost:11434)
+        model: Ollama model to use (default: llama3.2, alternatives: llama3, mistral)
+    
+    Returns:
+        Dictionary with extracted information
+    """
+    if not AI_SUPPORT:
+        raise ImportError("AI support not available. Install: pip install requests")
+    
+    # Default fields
+    if custom_fields is None:
+        custom_fields = ["Project Name", "Location", "Client", "Contractor", "Date of Completion", "Role", "Description"]
+    
+    # Truncate text if too long
+    max_chars = 6000
+    if len(text) > max_chars:
+        text = text[:max_chars] + "\n\n[Text truncated...]"
+    
+    # Build intelligent prompt
+    fields_list = ", ".join(custom_fields)
+    prompt = f"""You are analyzing a project document. Extract the following information: {fields_list}
+
+Document text:
+{text}
+
+Instructions:
+- Read the document carefully and understand the context
+- Extract the requested information even if there are no explicit labels
+- For "Project Name": identify what project this document is about
+- For "Location": find any place, city, or address mentioned
+- For "Client": identify the client, customer, or company being served
+- For "Contractor": identify the main contractor or construction company
+- For "Date of Completion": find project completion date, year, or time period
+- For "Role": determine the author's role or position in this project
+- For "Description": provide a brief 1-2 sentence summary
+- If information is not found, write "Not found"
+
+Respond ONLY with valid JSON (no markdown, no explanation):
+{{"project_name": "...", "location": "...", "client": "...", "contractor": "...", "date_of_completion": "...", "role": "...", "description": "..."}}
+
+JSON:"""
+    
+    try:
+        # Call Ollama API
+        response = requests.post(
+            f"{ollama_url}/api/generate",
+            json={
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.1,  # Lower for more consistent extraction
+                    "num_predict": 400
+                }
+            },
+            timeout=90
+        )
+        
+        if response.status_code != 200:
+            return {"error": f"Ollama error: {response.status_code}"}
+        
+        # Parse response
+        result_text = response.json().get("response", "").strip()
+        
+        # Extract JSON from response
+        if "```json" in result_text:
+            result_text = result_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in result_text:
+            result_text = result_text.split("```")[1].split("```")[0].strip()
+        
+        # Find JSON object
+        start = result_text.find("{")
+        end = result_text.rfind("}") + 1
+        if start >= 0 and end > start:
+            result_text = result_text[start:end]
+        
+        result_dict = json.loads(result_text)
+        return result_dict
+        
+    except requests.exceptions.ConnectionError:
+        return {"error": "Ollama not running. Start with: ollama serve"}
+    except requests.exceptions.Timeout:
+        return {"error": "Timeout. Try a shorter document"}
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON response", "raw": result_text[:200]}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def generate_smart_caption(
+    pdf_info: Dict[str, str],
+    template: Optional[str] = None
+) -> str:
+    """
+    Generate a smart caption based on extracted PDF information
+    
+    Args:
+        pdf_info: Dictionary with extracted information (from analyze_pdf_with_ai)
+        template: Custom template string with placeholders like {project_name}, {location}
+                 If None, will use default template
+    
+    Returns:
+        Generated caption string
+    """
+    # Default template if not specified
+    if template is None:
+        # Use project_name as main caption, with other info as supplementary
+        template = "{project_name}"
+    
+    # Replace placeholders with actual values
+    caption = template
+    for key, value in pdf_info.items():
+        placeholder = "{" + key + "}"
+        if placeholder in caption:
+            caption = caption.replace(placeholder, value if value != "Not found" else "")
+    
+    # Clean up extra spaces
+    caption = " ".join(caption.split())
+    
+    return caption
