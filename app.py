@@ -14,7 +14,9 @@ import torch  # PyTorch deep learning framework
 from PIL import Image  # Image processing
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-# PDF processing utilities
+################################################
+# Call pdf_utils.py - PDF processing utilities #
+################################################
 try:
     from pdf_utils import (
         save_pdf_to_catalog,
@@ -400,12 +402,13 @@ def embed_text(query: str) -> np.ndarray:
     return vector / max(norm, 1e-12)
 
 
-def search_similar(vector: np.ndarray, top_k: int = TOP_K) -> List[Tuple[str, float]]:
-    """Search for similar images using FAISS"""
+def search_similar(vector: np.ndarray, top_k: int = TOP_K * 4) -> List[Tuple[str, float]]:
+    """Search for similar images using FAISS (returns more results for pagination)"""
     index = st.session_state.get("faiss_index")
     paths = st.session_state.get("indexed_paths", [])
     if index is None or not paths:
         return []
+    # Get more results than TOP_K to support pagination
     query = vector.astype(np.float32)[None, :]
     scores, indices = index.search(query, min(top_k, len(paths)))
     results: List[Tuple[str, float]] = []
@@ -428,13 +431,40 @@ def record_query_metrics(mode: str, duration: float):
     }
 
 
-def render_results(results: List[Tuple[str, float]]):
-    """Display search results"""
+def render_results(results: List[Tuple[str, float]], results_per_page: int = 8):
+    """Display search results with pagination"""
     if not results:
         st.info("No results yet. Build index or adjust query.")
         return
+    
+    # Initialize pagination state
+    if "current_page" not in st.session_state:
+        st.session_state.current_page = 1
+    
+    # Calculate pagination
+    total_results = len(results)
+    total_pages = (total_results + results_per_page - 1) // results_per_page
+    current_page = st.session_state.current_page
+    
+    # Ensure current page is valid
+    if current_page > total_pages:
+        st.session_state.current_page = total_pages
+        current_page = total_pages
+    if current_page < 1:
+        st.session_state.current_page = 1
+        current_page = 1
+    
+    # Get results for current page
+    start_idx = (current_page - 1) * results_per_page
+    end_idx = min(start_idx + results_per_page, total_results)
+    page_results = results[start_idx:end_idx]
+    
+    # Display results count and pagination info
+    st.markdown(f"**Found {total_results} results** · Showing {start_idx + 1}-{end_idx}")
+    
+    # Display results in grid
     cols = st.columns(4)
-    for idx, (img_path, score) in enumerate(results):
+    for idx, (img_path, score) in enumerate(page_results):
         col = cols[idx % len(cols)]
         with col:
             meta = st.session_state.get("metadata", {}).get(img_path, {})
@@ -453,6 +483,34 @@ def render_results(results: List[Tuple[str, float]]):
                 caption=full_caption,
                 width="stretch",
             )
+    
+    # Pagination controls
+    if total_pages > 1:
+        st.divider()
+        col1, col2, col3, col4, col5 = st.columns([1, 1, 2, 1, 1])
+        
+        with col1:
+            if st.button("⏮️ First", key="page_first", disabled=(current_page == 1), use_container_width=True):
+                st.session_state.current_page = 1
+                st.rerun()
+        
+        with col2:
+            if st.button("◀️ Previous", key="page_prev", disabled=(current_page == 1), use_container_width=True):
+                st.session_state.current_page = current_page - 1
+                st.rerun()
+        
+        with col3:
+            st.markdown(f"<div style='text-align: center; padding: 8px;'>Page {current_page} of {total_pages}</div>", unsafe_allow_html=True)
+        
+        with col4:
+            if st.button("Next ▶️", key="page_next", disabled=(current_page == total_pages), use_container_width=True):
+                st.session_state.current_page = current_page + 1
+                st.rerun()
+        
+        with col5:
+            if st.button("Last ⏭️", key="page_last", disabled=(current_page == total_pages), use_container_width=True):
+                st.session_state.current_page = total_pages
+                st.rerun()
 
 
 def save_library_uploads(files: Sequence[UploadedFile]) -> List[Path]:
@@ -477,10 +535,6 @@ def save_library_uploads(files: Sequence[UploadedFile]) -> List[Path]:
             f.write(uploaded.getbuffer())
         saved.append(dest)
     return saved
-
-
-# ===== PDF Processing Functions =====
-# (Moved to pdf_utils.py for better organization)
 
 
 # ===== Streamlit UI Application =====
@@ -811,10 +865,23 @@ else:
     # Search mode (default)
     st.divider()
     
-    if not st.session_state.get("indexed_paths"):
+    # Validate that indexed paths still exist
+    indexed_paths = st.session_state.get("indexed_paths", [])
+    if indexed_paths:
+        # Check if paths are still valid
+        valid_paths = [p for p in indexed_paths if Path(p).exists()]
+        if len(valid_paths) != len(indexed_paths):
+            # Some paths are invalid, update session state
+            st.session_state["indexed_paths"] = valid_paths
+            indexed_paths = valid_paths
+            # Also clear search results since index changed
+            if "search_results" in st.session_state:
+                st.session_state.search_results = []
+    
+    if not indexed_paths:
         st.warning("No index yet. Switch to \"Indexing\" and run a sync.")
     else:
-        st.caption(f"Images available for search: {len(st.session_state['indexed_paths'])}")
+        st.caption(f"Images available for search: {len(indexed_paths)}")
 
     search_mode = st.radio("Select search mode", ["Text search", "Image search"], horizontal=True)
 
@@ -823,24 +890,50 @@ else:
     if search_mode == "Text search":
         text_query = st.text_input("Describe what you need (e.g., glass roof, beach, sunset...)")
         if text_query.strip():
-            with st.spinner("Searching..."):
-                start_time = perf_counter()
-                query_vector = embed_text(text_query.strip())
-                matches = search_similar(query_vector)
-                duration = perf_counter() - start_time
-                record_query_metrics("Text search", duration)
-            render_results(matches)
+            # Check if this is a new query
+            if st.session_state.get("last_query") != text_query.strip():
+                with st.spinner("Searching..."):
+                    start_time = perf_counter()
+                    query_vector = embed_text(text_query.strip())
+                    matches = search_similar(query_vector)
+                    duration = perf_counter() - start_time
+                    record_query_metrics("Text search", duration)
+                # Store results and reset page for new search
+                st.session_state.search_results = matches
+                st.session_state.last_query = text_query.strip()
+                st.session_state.current_page = 1
+            # Display stored results (only if they exist)
+            if st.session_state.get("search_results"):
+                render_results(st.session_state.search_results)
+        elif st.session_state.get("search_results"):
+            # Clear results when query is cleared
+            st.session_state.search_results = []
+            st.session_state.last_query = None
     elif search_mode == "Image search":
         uploaded_file = st.file_uploader("Upload an image to find similar ones", type=["jpg", "jpeg", "png", "bmp", "gif", "webp"])
         if uploaded_file is not None:
             st.image(uploaded_file, caption="Your uploaded image (thumbnail)", width="stretch")
-            with st.spinner("Searching for similar images..."):
-                start_time = perf_counter()
-                query_vector = embed_uploaded_image(uploaded_file)
-                matches = search_similar(query_vector)
-                duration = perf_counter() - start_time
-                record_query_metrics("Image search", duration)
-            render_results(matches)
+            # Use file name and size as identifier
+            file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+            # Check if this is a new upload
+            if st.session_state.get("last_upload") != file_id:
+                with st.spinner("Searching for similar images..."):
+                    start_time = perf_counter()
+                    query_vector = embed_uploaded_image(uploaded_file)
+                    matches = search_similar(query_vector)
+                    duration = perf_counter() - start_time
+                    record_query_metrics("Image search", duration)
+                # Store results and reset page for new search
+                st.session_state.search_results = matches
+                st.session_state.last_upload = file_id
+                st.session_state.current_page = 1
+            # Display stored results (only if they exist)
+            if st.session_state.get("search_results"):
+                render_results(st.session_state.search_results)
+        elif st.session_state.get("search_results"):
+            # Clear results when no file is uploaded
+            st.session_state.search_results = []
+            st.session_state.last_upload = None
 
     with metrics_container:
         metrics = st.session_state.get("last_metrics")

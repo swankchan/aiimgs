@@ -60,7 +60,7 @@ def save_pdf_to_catalog(pdf_file: UploadedFile, catalog_folder: Path) -> Path:
 def extract_images_from_pdf(
     pdf_file: UploadedFile, 
     output_folder: Path,
-    jpeg_quality: int = 85
+    jpeg_quality: int = 100
 ) -> Tuple[List[Path], str]:
     """
     Extract all embedded images from PDF and save them
@@ -261,9 +261,13 @@ def analyze_pdf_with_ai(
     if not AI_SUPPORT:
         raise ImportError("AI support not available. Install: pip install requests")
     
-    # Default fields
+    ###############################
+    #                             #
+    # Information to be extracted #
+    #                             #
+    ###############################
     if custom_fields is None:
-        custom_fields = ["Project Name", "Location", "Client", "Contractor", "Date of Completion", "Role", "Description"]
+        custom_fields = ["Project Title", "Location of the Buildings", "Client's Name", "Contractor's Name", "Role"]
     
     # Truncate text if too long
     max_chars = 6000
@@ -272,7 +276,7 @@ def analyze_pdf_with_ai(
     
     # Build intelligent prompt
     fields_list = ", ".join(custom_fields)
-    prompt = f"""You are analyzing a project document. Extract the following information: {fields_list}
+    prompt = f"""You are analyzing a PDF about Building Project of a Construction company. I need you to extract the following information: {fields_list} in order to build a database for making further reference. Please return the information.    
 
 Document text:
 {text}
@@ -303,11 +307,11 @@ JSON:"""
                 "prompt": prompt,
                 "stream": False,
                 "options": {
-                    "temperature": 0.1,  # Lower for more consistent extraction
-                    "num_predict": 400
+                    "temperature": 0.1, # Lower for more consistent extraction
+                    "num_predict": 1000 # Number of Tokens for 700 English Wordings
                 }
             },
-            timeout=90
+            timeout=600
         )
         
         if response.status_code != 200:
