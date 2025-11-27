@@ -63,6 +63,7 @@ DEFAULT_CONFIG = {
     }
 }
 
+
 def load_config() -> dict:
     """Load configuration from config.json file"""
     config_path = Path("config.json")
