@@ -168,19 +168,19 @@ def extract_text_from_pdf(pdf_file: UploadedFile) -> str:
 
 def extract_keywords_from_text(text: str, max_keywords: int = 5, ai_info: Optional[Dict[str, str]] = None) -> List[str]:
     """
-    Extract keywords from text, prioritizing important project information
+    Extract keywords from AI extracted information only (no text frequency analysis)
     
     Args:
-        text: Text content
-        max_keywords: Maximum number of keywords to return
+        text: Text content (not used, kept for backward compatibility)
+        max_keywords: Maximum number of keywords to return (not used)
         ai_info: AI extracted information (Client, Location, Contractor, Date, Role)
     
     Returns:
-        List of keywords with important project info first
+        List of keywords from AI extracted structured information
     """
     keywords = []
     
-    # Priority 1: Add AI extracted structured information
+    # Only use AI extracted structured information
     if ai_info:
         priority_fields = ["client", "location", "contractor", "role", "date_of_completion"]
         for field in priority_fields:
@@ -193,42 +193,7 @@ def extract_keywords_from_text(text: str, max_keywords: int = 5, ai_info: Option
                     if len(cleaned) > 2 and cleaned.lower() not in ["not", "found"]:
                         keywords.append(cleaned)
     
-    # Priority 2: Extract additional keywords from text
-    # Common stop words (English and Chinese)
-    stop_words = {
-        "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "from",
-        "is", "are", "was", "were", "be", "been", "being", "have", "has", "had", "do", "does", "did",
-        "will", "would", "could", "should", "may", "might", "can", "this", "that", "these", "those",
-        "i", "you", "he", "she", "it", "we", "they", "them", "their", "its", "our", "your",
-        "的", "了", "在", "是", "我", "有", "和", "就", "不", "人", "都", "一", "個", "上", "也", "說",
-        "出", "到", "時", "要", "以", "用", "著", "能", "之", "會", "後", "然", "沒", "很", "好", "來",
-        "page", "pages", "document", "file", "pdf", "image", "fig", "figure"
-    }
-    
-    # Remove special characters, keep letters, numbers, Chinese
-    text_lower = text.lower()
-    words = re.findall(r'\b\w+\b', text_lower)
-    
-    # Filter stop words and words that are too short
-    filtered_words = [
-        word for word in words 
-        if len(word) >= 3 and word not in stop_words
-    ]
-    
-    # Count word frequency
-    word_counts = Counter(filtered_words)
-    
-    # Get most common keywords
-    top_keywords = [word for word, count in word_counts.most_common(max_keywords * 2)]
-    
-    # Filter out pure numbers and words already in AI keywords
-    existing_lower = {k.lower() for k in keywords}
-    additional = [kw for kw in top_keywords 
-                  if not kw.isdigit() and kw.lower() not in existing_lower]
-    
-    keywords.extend(additional)
-    
-    # Return unique keywords, up to max_keywords * 2 to account for structured info
+    # Return unique keywords only from AI
     seen = set()
     unique_keywords = []
     for kw in keywords:
@@ -236,7 +201,7 @@ def extract_keywords_from_text(text: str, max_keywords: int = 5, ai_info: Option
             seen.add(kw.lower())
             unique_keywords.append(kw)
     
-    return unique_keywords[:max_keywords * 2]
+    return unique_keywords
 
 
 def analyze_pdf_with_ai(
