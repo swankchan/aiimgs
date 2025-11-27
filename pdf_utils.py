@@ -243,7 +243,7 @@ def analyze_pdf_with_ai(
     text: str,
     custom_fields: Optional[List[str]] = None,
     ollama_url: str = "http://localhost:11434",
-    model: str = "gemma3:1b"
+    model: str = "llama3.1:8b"
 ) -> Dict[str, str]:
     """
     Use local AI (Ollama) to intelligently analyze PDF content and extract information
@@ -253,7 +253,7 @@ def analyze_pdf_with_ai(
         text: PDF text content
         custom_fields: List of fields to extract (e.g., ["Location", "Client", "Role", "Project Name"])
         ollama_url: Ollama API URL (default: http://localhost:11434)
-        model: Ollama model to use (default: llama3.2, alternatives: llama3, mistral)
+        model: Ollama model to use (default: llama3.1:8b, alternatives: llama3.2, mistral)
     
     Returns:
         Dictionary with extracted information
