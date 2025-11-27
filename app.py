@@ -5,6 +5,7 @@ from time import perf_counter
 from typing import Callable, Iterable, List, Sequence, Tuple, Dict, Optional
 import json
 from io import BytesIO
+from datetime import datetime
 
 import faiss  # FAISS vector search library
 import numpy as np
@@ -40,10 +41,10 @@ DEFAULT_CONFIG = {
     },
     "image_formats": [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"],
     "model": {
-        "name": "clip-vit-b-32",
-        "architecture": "ViT-B-32",
+        "name": "clip-vit-l-14",
+        "architecture": "ViT-L-14",
         "pretrained": "openai",
-        "embedding_dim": 512
+        "embedding_dim": 768
     },
     "search": {
         "top_k": 8,
@@ -538,7 +539,16 @@ def save_library_uploads(files: Sequence[UploadedFile]) -> List[Path]:
 
 
 # ===== Streamlit UI Application =====
-st.title("AI Image Similarity Search")
+# Display title with last modified timestamp in top right corner
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.title("AI Image Similarity Search")
+with col2:
+    app_file = Path(__file__)
+    if app_file.exists():
+        modified_time = datetime.fromtimestamp(app_file.stat().st_mtime)
+        st.markdown(f"<div style='text-align: right; padding-top: 20px; color: #888; font-size: 0.85em;'>Last modified<br>{modified_time.strftime('%Y-%m-%d %H:%M:%S')}</div>", unsafe_allow_html=True)
+
 load_index_into_session()
 
 view_mode = st.sidebar.radio(

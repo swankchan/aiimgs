@@ -6,10 +6,10 @@
   },
   "image_formats": [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"],
   "model": {
-    "name": "clip-vit-b-32",
-    "architecture": "ViT-B-32",
+    "name": "clip-vit-l-14",
+    "architecture": "ViT-L-14",
     "pretrained": "openai",
-    "embedding_dim": 512
+    "embedding_dim": 768
   },
   "search": {
     "top_k": 8,

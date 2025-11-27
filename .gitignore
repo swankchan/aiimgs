@@ -19,7 +19,9 @@ repo-backup.bundle
 
 
 # Large image backup folder (already present in this workspace)
+images
 images backup/
+catalog
 catalog backup/
 metadata-files/
 
