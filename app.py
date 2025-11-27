@@ -560,6 +560,19 @@ view_mode = st.sidebar.radio(
     index=0,
 )
 
+# Display AI models information at bottom of sidebar
+st.sidebar.divider()
+st.sidebar.markdown("### 🤖 AI Models")
+st.sidebar.markdown(f"""
+**Image Search:**  
+`{CLIP_MODEL}` ({CLIP_PRETRAINED})  
+Embedding: {EMBED_DIM}D
+
+**PDF Analysis:**  
+`{PDF_AI_MODEL}`  
+Status: {'✅ Enabled' if PDF_AI_ENABLED else '❌ Disabled'}
+""")
+
 # Reset temporary UI state when switching views
 if "last_view_mode" not in st.session_state:
     st.session_state["last_view_mode"] = view_mode
