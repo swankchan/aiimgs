@@ -1,5 +1,6 @@
 {
     "terminal.integrated.defaultProfile.windows": "Command Prompt",
     "terminal.integrated.allowChords": true,
-    "terminal.integrated.suggest.enabled": true
+    "terminal.integrated.suggest.enabled": true,
+    "python.analysis.typeCheckingMode": "basic"
 }

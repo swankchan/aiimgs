@@ -212,7 +212,7 @@ def persist_index(paths: Sequence[str], features: np.ndarray, metadata: Optional
         return
     normalized = normalize_vectors(features).astype(np.float32)
     index = faiss.IndexFlatIP(normalized.shape[1])
-    index.add(normalized)
+    index.add(normalized)  # type: ignore[call-arg]
     faiss.write_index(index, str(FAISS_INDEX_FILE))
     np.savez_compressed(PATHS_FILE, paths=np.array(paths))
     np.save(FEATURES_FILE, normalized)
@@ -256,7 +256,7 @@ def encode_image_batch(tensors: List[torch.Tensor], model: torch.nn.Module) -> n
     """Encode a batch of images into feature vectors"""
     batch = torch.stack(tensors).to(DEVICE)
     with torch.no_grad():
-        features = model.encode_image(batch)
+        features = model.encode_image(batch)  # type: ignore[operator]
     return features.cpu().numpy().astype(np.float32)
 
 
@@ -285,7 +285,7 @@ def extract_image_index(
         except Exception as exc:
             st.warning(f"Failed to process image {path.name}: {exc}")
             continue
-        tensors.append(preprocess(image))
+        tensors.append(preprocess(image))  # type: ignore[arg-type, operator]
         valid_paths.append(path)
         if len(tensors) == BATCH_SIZE:
             flush_batch()
@@ -385,9 +385,9 @@ def embed_uploaded_image(uploaded_file) -> np.ndarray:
     """Encode uploaded image into vector"""
     model, preprocess, _ = load_clip_components()
     image = Image.open(uploaded_file).convert("RGB")
-    tensor = preprocess(image).unsqueeze(0).to(DEVICE)
+    tensor = preprocess(image).unsqueeze(0).to(DEVICE)  # type: ignore[union-attr, operator]
     with torch.no_grad():
-        features = model.encode_image(tensor)
+        features = model.encode_image(tensor)  # type: ignore[operator]
     vector = features[0].cpu().numpy().astype(np.float32)
     norm = np.linalg.norm(vector)
     return vector / max(norm, 1e-12)
@@ -398,7 +398,7 @@ def embed_text(query: str) -> np.ndarray:
     model, _, tokenizer = load_clip_components()
     tokens = tokenizer([query])
     with torch.no_grad():
-        features = model.encode_text(tokens.to(DEVICE))
+        features = model.encode_text(tokens.to(DEVICE))  # type: ignore[operator]
     vector = features[0].cpu().numpy().astype(np.float32)
     norm = np.linalg.norm(vector)
     return vector / max(norm, 1e-12)
