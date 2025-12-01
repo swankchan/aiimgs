@@ -41,10 +41,10 @@ DEFAULT_CONFIG = {
     },
     "image_formats": [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"],
     "model": {
-        "name": "clip-vit-l-14",
-        "architecture": "ViT-L-14",
+        "name": "clip-vit-b-32",
+        "architecture": "ViT-B-32",
         "pretrained": "openai",
-        "embedding_dim": 768
+        "embedding_dim": 512
     },
     "search": {
         "top_k": 8,
@@ -55,7 +55,7 @@ DEFAULT_CONFIG = {
         "jpeg_quality": 85,
         "ai_analysis": {
             "enabled": False,
-            "model": "llama3.1:8b",
+            "model": "llama3.2:3b",
             "ollama_url": "http://localhost:11434",
             "fields": ["Project Name", "Location", "Client", "Contractor", "Date of Completion", "Role", "Description"],
             "caption_template": "{project_name}"
@@ -433,8 +433,8 @@ def record_query_metrics(mode: str, duration: float):
     }
 
 
-def render_results(results: List[Tuple[str, float]], results_per_page: int = 8):
-    """Display search results with pagination"""
+def render_results(results: List[Tuple[str, float]], results_per_page: int = 16):
+    """Display search results with pagination (16 images per page in 4x4 grid)"""
     if not results:
         st.info("No results yet. Build index or adjust query.")
         return
@@ -464,27 +464,36 @@ def render_results(results: List[Tuple[str, float]], results_per_page: int = 8):
     # Display results count and pagination info
     st.markdown(f"**Found {total_results} results** · Showing {start_idx + 1}-{end_idx}")
     
-    # Display results in grid
-    cols = st.columns(4)
-    for idx, (img_path, score) in enumerate(page_results):
-        col = cols[idx % len(cols)]
-        with col:
-            meta = st.session_state.get("metadata", {}).get(img_path, {})
-            caption_parts = [f"{Path(img_path).name}", f"Similarity {score:.2f}"]
-            if isinstance(meta, dict):
-                caption = meta.get("caption", "")
-                keywords = meta.get("keywords", [])
-                if caption:
-                    caption_parts.insert(1, f"{caption}")
-                if keywords:
-                    kw = ", ".join(keywords)
-                    caption_parts.append(f"Keywords: {kw}")
-            full_caption = " · ".join(caption_parts)
-            st.image(
-                img_path,
-                caption=full_caption,
-                width="stretch",
-            )
+    # Custom CSS for square thumbnails
+    st.markdown("""
+    <style>
+    .square-img-container img {
+        width: 100% !important;
+        height: 200px !important;
+        object-fit: cover !important;
+        border-radius: 8px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Display results in 4x4 grid (4 rows of 4 images)
+    for row in range(4):
+        cols = st.columns(4)
+        for col_idx in range(4):
+            result_idx = row * 4 + col_idx
+            if result_idx < len(page_results):
+                img_path, score = page_results[result_idx]
+                with cols[col_idx]:
+                    # Get caption from metadata (if exists)
+                    meta = st.session_state.get("metadata", {}).get(img_path, {})
+                    caption = meta.get("caption", "") if isinstance(meta, dict) else ""
+                    
+                    # Build simple caption: filename or custom caption + similarity
+                    display_caption = f"{caption or Path(img_path).name} · {score:.2f}"
+                    
+                    st.markdown(f'<div class="square-img-container">', unsafe_allow_html=True)
+                    st.image(img_path, caption=display_caption, use_container_width=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
     
     # Pagination controls
     if total_pages > 1:
