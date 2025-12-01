@@ -439,9 +439,6 @@ def render_results(results: List[Tuple[str, float]], results_per_page: int = 16)
         st.info("No results yet. Build index or adjust query.")
         return
     
-    # Show image details dialog if triggered
-    render_image_details_dialog()
-    
     # Initialize pagination state
     if "current_page" not in st.session_state:
         st.session_state.current_page = 1
@@ -496,75 +493,54 @@ def render_results(results: List[Tuple[str, float]], results_per_page: int = 16)
                     display_caption = f"{caption or Path(img_path).name} · {score:.2f}"
                     
                     st.markdown(f'<div class="square-img-container">', unsafe_allow_html=True)
-                    
-                    # Click image to show enlarged view with details
-                    if st.button("", key=f"img_{result_idx}_{current_page}", use_container_width=True):
-                        st.session_state.enlarged_image = img_path
-                        st.session_state.enlarged_meta = meta
-                        st.session_state.enlarged_score = score
-                        st.rerun()
-                    
-                    # Use custom CSS to make the button invisible and overlay the image
-                    st.markdown("""
-                    <style>
-                    button[kind="secondary"] {
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 200px;
-                        opacity: 0;
-                        cursor: pointer;
-                        z-index: 10;
-                    }
-                    </style>
-                    """, unsafe_allow_html=True)
-                    
                     st.image(img_path, caption=display_caption, use_container_width=True)
                     st.markdown('</div>', unsafe_allow_html=True)
     
     # Pagination controls
     if total_pages > 1:
         st.divider()
+        
         col1, col2, col3, col4, col5 = st.columns([1, 1, 2, 1, 1])
         
         with col1:
-            if st.button("⏮️ First", key="page_first", disabled=(current_page == 1), use_container_width=True):
+            if st.button("⏮️ First", disabled=(current_page == 1), key="btn_first", use_container_width=True):
                 st.session_state.current_page = 1
                 st.rerun()
         
         with col2:
-            if st.button("◀️ Previous", key="page_prev", disabled=(current_page == 1), use_container_width=True):
+            if st.button("◀️ Previous", disabled=(current_page == 1), key="btn_prev", use_container_width=True):
                 st.session_state.current_page = current_page - 1
                 st.rerun()
         
         with col3:
-            st.markdown(f"<div style='text-align: center; padding: 8px;'>Page {current_page} of {total_pages}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; padding: 8px; font-size: 18px;'><b>Page {current_page} of {total_pages}</b></div>", unsafe_allow_html=True)
         
         with col4:
-            if st.button("Next ▶️", key="page_next", disabled=(current_page == total_pages), use_container_width=True):
+            if st.button("Next ▶️", disabled=(current_page == total_pages), key="btn_next", use_container_width=True):
                 st.session_state.current_page = current_page + 1
                 st.rerun()
         
         with col5:
-            if st.button("Last ⏭️", key="page_last", disabled=(current_page == total_pages), use_container_width=True):
+            if st.button("Last ⏭️", disabled=(current_page == total_pages), key="btn_last", use_container_width=True):
                 st.session_state.current_page = total_pages
                 st.rerun()
+    else:
+        st.divider()
+        st.markdown(f"<div style='text-align: center; padding: 8px;'>Page 1 of 1</div>", unsafe_allow_html=True)
 
 
-def render_image_details_dialog():
-    """Show enlarged image as a modal dialog popup"""
+def render_library_image_dialog():
+    """Show enlarged image from library as a modal dialog popup"""
     if "enlarged_image" not in st.session_state or not st.session_state.enlarged_image:
         return
     
     # Get image details
     img_path = st.session_state.enlarged_image
     meta = st.session_state.enlarged_meta
-    score = st.session_state.enlarged_score
     caption = meta.get("caption", "") if isinstance(meta, dict) else ""
     keywords = meta.get("keywords", []) if isinstance(meta, dict) else []
     
-    # Create modal dialog using st.dialog (Streamlit's built-in modal)
+    # Create modal dialog
     @st.dialog("🖼️ Image Details", width="large")
     def show_dialog():
         col_img, col_info = st.columns([2, 1])
@@ -575,7 +551,6 @@ def render_image_details_dialog():
         with col_info:
             st.markdown("### 📋 Information")
             st.markdown(f"**📁 Path:**  \n`{Path(img_path).name}`")
-            st.markdown(f"**📊 Similarity:** {score:.4f}")
             
             if caption:
                 st.markdown(f"**📝 Caption:**  \n{caption}")
@@ -589,13 +564,14 @@ def render_image_details_dialog():
             
             st.divider()
             if st.button("✖️ Close", use_container_width=True):
-                del st.session_state.enlarged_image
-                del st.session_state.enlarged_meta
-                del st.session_state.enlarged_score
+                # Clear the enlarged image state
+                for key in ["enlarged_image", "enlarged_meta"]:
+                    if key in st.session_state:
+                        del st.session_state[key]
                 st.rerun()
     
     show_dialog()
-    
+
 
 def save_library_uploads(files: Sequence[UploadedFile]) -> List[Path]:
     """Save uploaded images to image folder"""
@@ -979,7 +955,7 @@ elif view_mode == "Library":
     st.markdown("View all indexed images and PDF files with thumbnails")
     
     # Show image details dialog if triggered
-    render_image_details_dialog()
+    render_library_image_dialog()
     
     # Filter selector and items per page
     col_filter, col_perpage = st.columns([2, 2])
@@ -1093,7 +1069,6 @@ elif view_mode == "Library":
                                 meta = st.session_state.get("metadata", {}).get(item_path, {})
                                 st.session_state.enlarged_image = item_path
                                 st.session_state.enlarged_meta = meta
-                                st.session_state.enlarged_score = 0.0  # No score in library view
                                 st.rerun()
                     
                     st.markdown(f"Type: {item_type.upper()}")
