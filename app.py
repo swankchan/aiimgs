@@ -439,6 +439,9 @@ def render_results(results: List[Tuple[str, float]], results_per_page: int = 16)
         st.info("No results yet. Build index or adjust query.")
         return
     
+    # Show image details dialog if triggered
+    render_image_details_dialog()
+    
     # Initialize pagination state
     if "current_page" not in st.session_state:
         st.session_state.current_page = 1
@@ -484,14 +487,39 @@ def render_results(results: List[Tuple[str, float]], results_per_page: int = 16)
             if result_idx < len(page_results):
                 img_path, score = page_results[result_idx]
                 with cols[col_idx]:
-                    # Get caption from metadata (if exists)
+                    # Get caption and keywords from metadata (if exists)
                     meta = st.session_state.get("metadata", {}).get(img_path, {})
                     caption = meta.get("caption", "") if isinstance(meta, dict) else ""
+                    keywords = meta.get("keywords", []) if isinstance(meta, dict) else []
                     
                     # Build simple caption: filename or custom caption + similarity
                     display_caption = f"{caption or Path(img_path).name} · {score:.2f}"
                     
                     st.markdown(f'<div class="square-img-container">', unsafe_allow_html=True)
+                    
+                    # Click image to show enlarged view with details
+                    if st.button("", key=f"img_{result_idx}_{current_page}", use_container_width=True):
+                        st.session_state.enlarged_image = img_path
+                        st.session_state.enlarged_meta = meta
+                        st.session_state.enlarged_score = score
+                        st.rerun()
+                    
+                    # Use custom CSS to make the button invisible and overlay the image
+                    st.markdown("""
+                    <style>
+                    button[kind="secondary"] {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 200px;
+                        opacity: 0;
+                        cursor: pointer;
+                        z-index: 10;
+                    }
+                    </style>
+                    """, unsafe_allow_html=True)
+                    
                     st.image(img_path, caption=display_caption, use_container_width=True)
                     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -523,6 +551,51 @@ def render_results(results: List[Tuple[str, float]], results_per_page: int = 16)
                 st.session_state.current_page = total_pages
                 st.rerun()
 
+
+def render_image_details_dialog():
+    """Show enlarged image as a modal dialog popup"""
+    if "enlarged_image" not in st.session_state or not st.session_state.enlarged_image:
+        return
+    
+    # Get image details
+    img_path = st.session_state.enlarged_image
+    meta = st.session_state.enlarged_meta
+    score = st.session_state.enlarged_score
+    caption = meta.get("caption", "") if isinstance(meta, dict) else ""
+    keywords = meta.get("keywords", []) if isinstance(meta, dict) else []
+    
+    # Create modal dialog using st.dialog (Streamlit's built-in modal)
+    @st.dialog("🖼️ Image Details", width="large")
+    def show_dialog():
+        col_img, col_info = st.columns([2, 1])
+        
+        with col_img:
+            st.image(img_path, use_container_width=True)
+        
+        with col_info:
+            st.markdown("### 📋 Information")
+            st.markdown(f"**📁 Path:**  \n`{Path(img_path).name}`")
+            st.markdown(f"**📊 Similarity:** {score:.4f}")
+            
+            if caption:
+                st.markdown(f"**📝 Caption:**  \n{caption}")
+            
+            if keywords:
+                st.markdown(f"**🏷️ Keywords ({len(keywords)}):**")
+                keywords_text = ", ".join(keywords)
+                st.markdown(f"_{keywords_text}_")
+            else:
+                st.markdown("**🏷️ Keywords:** _None_")
+            
+            st.divider()
+            if st.button("✖️ Close", use_container_width=True):
+                del st.session_state.enlarged_image
+                del st.session_state.enlarged_meta
+                del st.session_state.enlarged_score
+                st.rerun()
+    
+    show_dialog()
+    
 
 def save_library_uploads(files: Sequence[UploadedFile]) -> List[Path]:
     """Save uploaded images to image folder"""
@@ -565,7 +638,7 @@ load_index_into_session()
 
 view_mode = st.sidebar.radio(
     "Navigation",
-    ["Search", "Indexing", "Metadata"],
+    ["Search", "Indexing", "Metadata", "Library"],
     index=0,
 )
 
@@ -579,7 +652,6 @@ Embedding: {EMBED_DIM}D
 
 **PDF Analysis:**  
 `{PDF_AI_MODEL}`  
-Status: {'✅ Enabled' if PDF_AI_ENABLED else '❌ Disabled'}
 """)
 
 # Reset temporary UI state when switching views
@@ -607,11 +679,18 @@ if view_mode == "Indexing":
             help=f"Use {PDF_AI_MODEL} to extract Project Name, Location, Client, etc. Requires Ollama running locally."
         )
         
+        # Use session state to track if PDF files were just uploaded
+        if "pdf_files_processed" not in st.session_state:
+            st.session_state.pdf_files_processed = False
+        if "pdf_success_message" not in st.session_state:
+            st.session_state.pdf_success_message = None
+        
         pdf_files = st.file_uploader(
             "Upload PDF files to extract images",
             type=["pdf"],
             accept_multiple_files=True,
-            help="Upload one or more PDF files. Images will be extracted from each page."
+            help="Upload one or more PDF files. Images will be extracted from each page.",
+            key="pdf_uploader" if not st.session_state.pdf_files_processed else "pdf_uploader_cleared"
         )
         
         if pdf_files and st.button("Extract images from PDF"):
@@ -648,7 +727,7 @@ if view_mode == "Indexing":
                                     ai_info = analyze_pdf_with_ai(
                                         extracted_text,
                                         custom_fields=PDF_AI_FIELDS,
-                                        ollama_url=PDF_AI_OLLAMA_URL,
+                                        llm_url=PDF_AI_OLLAMA_URL,
                                         model=PDF_AI_MODEL
                                     )
                                     
@@ -685,7 +764,17 @@ if view_mode == "Indexing":
                 if all_extracted_images:
                     st.session_state["pdf_extracted_data"] = all_pdf_data
                     st.session_state["pdf_keywords_input"] = {}
-                    st.success(f"Total: {len(all_extracted_images)} images extracted. Scroll down to add keywords.")
+                    st.session_state.pdf_files_processed = True
+                    st.session_state.pdf_success_message = f"Total: {len(all_extracted_images)} images extracted. Scroll down to add keywords."
+                    st.rerun()
+        
+        # Show success message below the button
+        if st.session_state.pdf_success_message:
+            st.success(st.session_state.pdf_success_message)
+        
+        # Reset the flag after clearing
+        if st.session_state.pdf_files_processed and not pdf_files:
+            st.session_state.pdf_files_processed = False
         
         # ===== Keywords Selection Interface =====
         if "pdf_extracted_data" in st.session_state:
@@ -802,17 +891,36 @@ if view_mode == "Indexing":
     st.divider()
     
     # ===== Original Image Upload Feature =====
+    # Use session state to track if files were just uploaded
+    if "uploaded_files_saved" not in st.session_state:
+        st.session_state.uploaded_files_saved = False
+    if "upload_success_message" not in st.session_state:
+        st.session_state.upload_success_message = None
+    
     upload_candidates = st.file_uploader(
         "Add new images to the gallery (multiple files allowed)",
         type=list({ext.replace(".", "") for ext in IMAGE_EXTS}),
         accept_multiple_files=True,
+        key="image_uploader" if not st.session_state.uploaded_files_saved else "image_uploader_cleared"
     )
+    
     if st.button("Save uploaded images", disabled=not upload_candidates):
         saved_paths = save_library_uploads(upload_candidates or [])
         if saved_paths:
-            st.success(f"Added {len(saved_paths)} images. Run sync below to update the index.")
+            st.session_state.upload_success_message = f"Added {len(saved_paths)} images. Run sync below to update the index."
+            st.session_state.uploaded_files_saved = True
+            st.rerun()
         else:
+            st.session_state.upload_success_message = None
             st.info("No images were saved. Please confirm the file types.")
+    
+    # Show success message below the button
+    if st.session_state.upload_success_message:
+        st.success(st.session_state.upload_success_message)
+    
+    # Reset the flag after clearing
+    if st.session_state.uploaded_files_saved and not upload_candidates:
+        st.session_state.uploaded_files_saved = False
 
     available_dirs = list_available_directories()
     default_dirs = [str(path) for path in IMAGE_FOLDERS if path.exists()]
@@ -865,6 +973,171 @@ if view_mode == "Indexing":
     if st.button("Remove selected images", disabled=not removal_selection):
         with st.spinner("Removing selected images..."):
             remove_images_from_index(removal_selection, delete_files)
+
+elif view_mode == "Library":
+    st.subheader("📚 Library")
+    st.markdown("View all indexed images and PDF files with thumbnails")
+    
+    # Show image details dialog if triggered
+    render_image_details_dialog()
+    
+    # Filter selector and items per page
+    col_filter, col_perpage = st.columns([2, 2])
+    with col_filter:
+        filter_type = st.selectbox(
+            "Show:",
+            options=["Please select", "All", "Images Only", "PDFs Only"],
+            index=0,
+            help="Filter items by type"
+        )
+    with col_perpage:
+        items_per_page = st.selectbox(
+            "Items per page:",
+            options=[10, 20, 50, 100],
+            index=1,  # Default to 20
+        )
+    
+    # Get all indexed images
+    indexed_paths = st.session_state.get("indexed_paths", [])
+    
+    # Get all PDFs from catalog
+    pdf_files = []
+    if PDF_CATALOG_FOLDER.exists():
+        pdf_files = list(PDF_CATALOG_FOLDER.glob("*.pdf"))
+    
+    # Show message if "Please select" is chosen
+    if filter_type == "Please select":
+        st.markdown(f"**Available:** {len(indexed_paths)} images, {len(pdf_files)} PDFs")
+    else:
+        # Filter items based on selection
+        if filter_type == "Images Only":
+            all_items = [(str(p), "image") for p in indexed_paths]
+        elif filter_type == "PDFs Only":
+            all_items = [(str(p), "pdf") for p in pdf_files]
+        else:  # All
+            all_items = [(str(p), "image") for p in indexed_paths] + [(str(p), "pdf") for p in pdf_files]
+        
+        total_items = len(all_items)
+        
+        if total_items == 0:
+            st.info(f"No {filter_type.lower()} found. Index some images or upload PDFs first.")
+        else:
+            st.markdown(f"**Showing:** {total_items} items ({len(indexed_paths)} images total, {len(pdf_files)} PDFs total)")
+            
+            # Initialize pagination for inventory
+            if "inventory_page" not in st.session_state:
+                st.session_state.inventory_page = 1
+            
+            # Reset to page 1 if filter changes
+            if "last_filter_type" not in st.session_state or st.session_state.last_filter_type != filter_type:
+                st.session_state.inventory_page = 1
+                st.session_state.last_filter_type = filter_type
+            
+            # Calculate pagination
+            total_pages = (total_items + items_per_page - 1) // items_per_page
+            current_page = st.session_state.inventory_page
+            
+            # Ensure current page is valid
+            if current_page > total_pages:
+                st.session_state.inventory_page = total_pages
+                current_page = total_pages
+            if current_page < 1:
+                st.session_state.inventory_page = 1
+                current_page = 1
+            
+            # Get items for current page
+            start_idx = (current_page - 1) * items_per_page
+            end_idx = min(start_idx + items_per_page, total_items)
+            page_items = all_items[start_idx:end_idx]
+            
+            st.markdown(f"Showing {start_idx + 1}-{end_idx} of {total_items}")
+            st.divider()
+            
+            # Display items in a table-like format
+            for idx, (item_path, item_type) in enumerate(page_items):
+                item_path_obj = Path(item_path)
+                
+                col_thumb, col_info = st.columns([1, 4])
+                
+                with col_thumb:
+                    try:
+                        if item_type == "image":
+                            st.image(item_path, width=100)
+                        else:  # PDF
+                            # Generate thumbnail from first page of PDF using PyMuPDF
+                            try:
+                                import fitz  # PyMuPDF
+                                doc = fitz.open(item_path)
+                                if len(doc) > 0:
+                                    page = doc[0]  # First page
+                                    # Render page to image at low resolution for thumbnail
+                                    pix = page.get_pixmap(matrix=fitz.Matrix(0.3, 0.3))  # 30% scale
+                                    img_data = pix.tobytes("png")
+                                    st.image(img_data, width=100)
+                                    doc.close()
+                                else:
+                                    st.markdown("📄 PDF")
+                            except Exception as pdf_err:
+                                st.markdown("📄 PDF")
+                    except Exception as e:
+                        st.markdown(f"⚠️ Error")
+                
+                with col_info:
+                    # Name and enlarge button on same line
+                    col_name, col_btn = st.columns([4, 1])
+                    with col_name:
+                        st.markdown(f"**{item_path_obj.name}**")
+                    with col_btn:
+                        if item_type == "image":
+                            if st.button("🔍", key=f"lib_view_{idx}_{current_page}", help="View enlarged"):
+                                meta = st.session_state.get("metadata", {}).get(item_path, {})
+                                st.session_state.enlarged_image = item_path
+                                st.session_state.enlarged_meta = meta
+                                st.session_state.enlarged_score = 0.0  # No score in library view
+                                st.rerun()
+                    
+                    st.markdown(f"Type: {item_type.upper()}")
+                    st.markdown(f"Path: `{item_path}`")
+                    
+                    # Show metadata if available
+                    if item_type == "image":
+                        meta = st.session_state.get("metadata", {}).get(item_path, {})
+                        if isinstance(meta, dict):
+                            caption = meta.get("caption", "")
+                            keywords = meta.get("keywords", [])
+                            if caption:
+                                st.markdown(f"Caption: _{caption}_")
+                            if keywords:
+                                st.markdown(f"Keywords: {', '.join(keywords[:5])}{'...' if len(keywords) > 5 else ''}")
+                
+                st.divider()
+            
+            # Pagination controls
+            if total_pages > 1:
+                col1, col2, col3, col4, col5 = st.columns([1, 1, 2, 1, 1])
+                
+                with col1:
+                    if st.button("⏮️ First", key="inv_first", disabled=(current_page == 1), use_container_width=True):
+                        st.session_state.inventory_page = 1
+                        st.rerun()
+                
+                with col2:
+                    if st.button("◀️ Previous", key="inv_prev", disabled=(current_page == 1), use_container_width=True):
+                        st.session_state.inventory_page = current_page - 1
+                        st.rerun()
+                
+                with col3:
+                    st.markdown(f"<div style='text-align: center; padding: 8px;'>Page {current_page} of {total_pages}</div>", unsafe_allow_html=True)
+                
+                with col4:
+                    if st.button("Next ▶️", key="inv_next", disabled=(current_page == total_pages), use_container_width=True):
+                        st.session_state.inventory_page = current_page + 1
+                        st.rerun()
+                
+                with col5:
+                    if st.button("Last ⏭️", key="inv_last", disabled=(current_page == total_pages), use_container_width=True):
+                        st.session_state.inventory_page = total_pages
+                        st.rerun()
 
 elif view_mode == "Metadata":
     st.subheader("Edit captions & keywords")

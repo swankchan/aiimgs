@@ -6,7 +6,6 @@
   },
   "image_formats": [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"],
   "model": {
-    "_comment": "Available pretrained: openai, laion2b_s32b_b82k, datacomp_xl_s13b_b90k, laion400m_e32",
     "name": "clip-vit-b-32",
     "architecture": "ViT-B-32",
     "pretrained": "openai", 
@@ -21,8 +20,8 @@
     "jpeg_quality": 99,
     "ai_analysis": {
       "enabled": true,
-      "model": "llama3.2:3b",
-      "ollama_url": "http://localhost:11434",
+      "model": "gemma3:1b",
+      "llm_url": "http://localhost:11434",
       "fields": ["Project Name", "Location", "Client", "Contractor", "Date of Completion", "Role", "Description"],
       "caption_template": "{project_name}"
     }

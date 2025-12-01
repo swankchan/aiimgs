@@ -242,7 +242,7 @@ def extract_keywords_from_text(text: str, max_keywords: int = 5, ai_info: Option
 def analyze_pdf_with_ai(
     text: str,
     custom_fields: Optional[List[str]] = None,
-    ollama_url: str = "http://localhost:11434",
+    llm_url: str = "http://localhost:11434",
     model: str = "llama3.2:3b"
 ) -> Dict[str, str]:
     """
@@ -252,8 +252,8 @@ def analyze_pdf_with_ai(
     Args:
         text: PDF text content
         custom_fields: List of fields to extract (e.g., ["Location", "Client", "Role", "Project Name"])
-        ollama_url: Ollama API URL (default: http://localhost:11434)
-        model: Ollama model to use (default: llama3.2:3b, alternatives: llama3.1, mistral)
+        llm_url: LLM API URL (default: http://localhost:11434)
+        model: LLM model to use (default: llama3.2:3b, alternatives: llama3.1, mistral)
     
     Returns:
         Dictionary with extracted information
@@ -299,7 +299,7 @@ JSON:"""
     try:
         # Call Ollama API
         response = requests.post(
-            f"{ollama_url}/api/generate",
+            f"{llm_url}/api/generate",
             json={
                 "model": model,
                 "prompt": prompt,
