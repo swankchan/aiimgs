@@ -168,38 +168,73 @@ def extract_text_from_pdf(pdf_file: UploadedFile) -> str:
 
 def extract_keywords_from_text(text: str, max_keywords: int = 5, ai_info: Optional[Dict[str, str]] = None) -> List[str]:
     """
-    Extract keywords from AI extracted information only (no text frequency analysis)
+    Extract keywords from text using multiple fallback methods
     
     Args:
-        text: Text content (not used, kept for backward compatibility)
-        max_keywords: Maximum number of keywords to return (not used)
-        ai_info: AI extracted information (Client, Location, Contractor, Date, Role)
+        text: Text content
+        max_keywords: Maximum number of keywords to return
+        ai_info: AI extracted information (Client, Location, Contractor, Date, Role) - optional
     
     Returns:
-        List of keywords from AI extracted structured information
+        List of keywords
     """
     keywords = []
     
-    # Only use AI extracted structured information
+    # Method 1: AI extracted structured information (if available)
     if ai_info:
         priority_fields = ["client", "location", "contractor", "role", "date_of_completion"]
         for field in priority_fields:
             value = ai_info.get(field, "")
             if value and value != "Not found":
-                # Split compound names and add meaningful parts
                 parts = value.replace(",", " ").replace("Ltd", "").replace("Limited", "").split()
                 for part in parts:
                     cleaned = part.strip("()[]")
                     if len(cleaned) > 2 and cleaned.lower() not in ["not", "found"]:
                         keywords.append(cleaned)
     
-    # Return unique keywords only from AI
+    # Method 2: Pattern-based extraction (works without AI)
+    # Look for common document patterns
+    patterns = {
+        "Project": r"(?:Project|Development|Building|Construction)[\s:]+([A-Z][A-Za-z\s&]+?)(?:\n|,|\.)",
+        "Location": r"(?:Location|Address|Site|at)[\s:]+([A-Z][A-Za-z\s,]+?)(?:\n|Project|Client)",
+        "Client": r"(?:Client|Owner|For)[\s:]+([A-Z][A-Za-z\s&]+?)(?:\n|Contractor|Project)",
+        "Year": r"\b(19|20)\d{2}\b"
+    }
+    
+    for label, pattern in patterns.items():
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        for match in matches[:2]:  # Limit to 2 matches per pattern
+            if isinstance(match, tuple):
+                match = match[0] if match[0] else match[1]
+            cleaned = match.strip()
+            if len(cleaned) > 3:
+                keywords.append(cleaned)
+    
+    # Method 3: Capitalized phrases (likely to be proper nouns/names)
+    capitalized = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}\b', text)
+    keywords.extend(capitalized[:max_keywords])
+    
+    # Method 4: Word frequency (fallback)
+    if len(keywords) < max_keywords:
+        stop_words = {
+            "the", "and", "for", "with", "this", "that", "from", "have", "been",
+            "will", "page", "project", "building", "construction", "document"
+        }
+        words = re.findall(r'\b[a-z]{4,}\b', text.lower())
+        filtered = [w for w in words if w not in stop_words]
+        word_counts = Counter(filtered)
+        keywords.extend([w for w, c in word_counts.most_common(max_keywords * 2)])
+    
+    # Return unique keywords
     seen = set()
     unique_keywords = []
     for kw in keywords:
-        if kw.lower() not in seen:
-            seen.add(kw.lower())
+        kw_lower = kw.lower()
+        if kw_lower not in seen and len(kw) > 2:
+            seen.add(kw_lower)
             unique_keywords.append(kw)
+            if len(unique_keywords) >= max_keywords * 2:
+                break
     
     return unique_keywords
 
