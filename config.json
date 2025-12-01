@@ -22,7 +22,7 @@
     "ai_analysis": {
       "enabled": true,
       "model": "llama3.2:3b",
-      "ollama_url": "http://172.18.128.1:11434",
+      "ollama_url": "http://localhost:11434",
       "fields": ["Project Name", "Location", "Client", "Contractor", "Date of Completion", "Role", "Description"],
       "caption_template": "{project_name}"
     }

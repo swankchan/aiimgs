@@ -599,6 +599,14 @@ if view_mode == "Indexing":
     # ===== PDF Upload and Image Extraction =====
     if PDF_SUPPORT:
         st.markdown("### 📄 Extract Images from PDF")
+        
+        # AI Analysis toggle
+        use_ai = st.checkbox(
+            "🤖 Enable AI analysis for PDF (requires Ollama)",
+            value=PDF_AI_ENABLED,
+            help=f"Use {PDF_AI_MODEL} to extract Project Name, Location, Client, etc. Requires Ollama running locally."
+        )
+        
         pdf_files = st.file_uploader(
             "Upload PDF files to extract images",
             type=["pdf"],
@@ -631,10 +639,10 @@ if view_mode == "Indexing":
                         pdf_file.seek(0)  # Reset file pointer
                         extracted_text = extract_text_from_pdf(pdf_file)
                         
-                        # AI analysis (if enabled) - do this FIRST to get structured info
+                        # AI analysis (if enabled by user) - do this FIRST to get structured info
                         ai_info = None
                         smart_caption = None
-                        if PDF_AI_ENABLED and extracted_text.strip():
+                        if use_ai and extracted_text.strip():
                             try:
                                 with st.spinner("🤖 Analyzing with AI... (10-30 seconds)"):
                                     ai_info = analyze_pdf_with_ai(
@@ -682,12 +690,6 @@ if view_mode == "Indexing":
         # ===== Keywords Selection Interface =====
         if "pdf_extracted_data" in st.session_state:
             st.markdown("### 🏷️ Add Keywords for Extracted Images")
-            
-            # Show AI analysis toggle if available
-            if PDF_AI_ENABLED:
-                st.info("✨ AI Analysis is enabled. Extracted information will be shown below.")
-            else:
-                st.info("Review extracted text and enter keywords for each image. The PDF filename will be used as the caption.")
             
             for pdf_data in st.session_state["pdf_extracted_data"]:
                 pdf_filename = pdf_data["pdf_filename"]
