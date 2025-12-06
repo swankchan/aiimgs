@@ -6,8 +6,8 @@
   },
   "image_formats": [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"],
   "model": {
-    "name": "clip-vit-b-32",
-    "architecture": "ViT-B-32",
+    "name": "clip-vit-b-16",
+    "architecture": "ViT-B-16",
     "pretrained": "openai", 
     "embedding_dim": 512
   },

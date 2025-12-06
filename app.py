@@ -15,6 +15,18 @@ import torch  # PyTorch deep learning framework
 from PIL import Image  # Image processing
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
+# Import database helpers
+from db_helper import (
+    get_all_metadata,
+    save_metadata,
+    delete_metadata,
+    get_metadata,
+    get_stats
+)
+
+# Import authentication
+from auth import require_login, show_logout_button
+
 ################################################
 # Call pdf_utils.py - PDF processing utilities #
 ################################################
@@ -41,8 +53,8 @@ DEFAULT_CONFIG = {
     },
     "image_formats": [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"],
     "model": {
-        "name": "clip-vit-b-32",
-        "architecture": "ViT-B-32",
+        "name": "clip-vit-b-16",
+        "architecture": "ViT-B-16",
         "pretrained": "openai",
         "embedding_dim": 512
     },
@@ -159,42 +171,20 @@ def normalize_path_key(path_str: str) -> str:
 
 
 def load_all_metadata() -> Dict[str, Dict]:
-    """Load all image caption and keyword metadata"""
-    if not METADATA_FILE.exists():
-        return {}
+    """Load all image caption and keyword metadata from database"""
     try:
-        with open(METADATA_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            if isinstance(data, dict):
-                # Convert all relative paths to absolute paths for consistency
-                normalized = {}
-                for key, val in data.items():
-                    norm_key = normalize_path_key(key)
-                    normalized[norm_key] = val
-                return normalized
-    except Exception:
-        pass
-    return {}
+        return get_all_metadata()
+    except Exception as e:
+        st.error(f"Error loading metadata from database: {e}")
+        return {}
 
 
 def save_metadata_file(metadata: Dict[str, Dict]):
-    """Save metadata to JSON file (using relative paths for portability)"""
-    ensure_index_dir()
-    try:
-        # Convert absolute paths to relative paths for portability
-        relative_meta: Dict[str, Dict] = {}
-        for abs_path, data in metadata.items():
-            try:
-                rel_path = str(Path(abs_path).relative_to(Path.cwd()))
-            except ValueError:
-                # If path cannot be made relative, use original path
-                rel_path = abs_path
-            relative_meta[rel_path] = data
-        
-        with open(METADATA_FILE, "w", encoding="utf-8") as f:
-            json.dump(relative_meta, f, ensure_ascii=False, indent=2)
-    except Exception as exc:
-        st.warning(f"Failed to save metadata: {exc}")
+    """Save metadata to database"""
+    # Note: Individual saves are now handled by save_metadata() in db_helper
+    # This function is kept for compatibility but does nothing
+    # Use save_metadata(path, caption, keywords) directly instead
+    pass
 
 
 def persist_index(paths: Sequence[str], features: np.ndarray, metadata: Optional[Dict[str, Dict]] = None):
@@ -338,6 +328,8 @@ def sync_directories(
             pstr = str(p)
             if pstr not in existing_meta:
                 existing_meta[pstr] = {"caption": "", "keywords": []}
+                # Save to database
+                save_metadata(pstr, "", [])
     if retained_paths:
         combined_features = np.vstack(retained_features)
     else:
@@ -365,12 +357,13 @@ def remove_images_from_index(paths_to_remove: Sequence[str], delete_files: bool 
         new_features = existing_features[keep_indices]
     else:
         new_features = np.empty((0, EMBED_DIM), dtype=np.float32)
-    # Filter metadata for retained paths
-    existing_meta = load_all_metadata()
-    new_meta: Dict[str, Dict] = {}
-    for p in new_paths:
-        if p in existing_meta:
-            new_meta[p] = existing_meta[p]
+    
+    # Remove from database
+    delete_metadata(list(paths_to_remove))
+    
+    # Get remaining metadata from database
+    new_meta = load_all_metadata()
+    
     persist_index(new_paths, new_features, metadata=new_meta)
     if delete_files:
         for path in paths_to_remove:
@@ -433,8 +426,8 @@ def record_query_metrics(mode: str, duration: float):
     }
 
 
-def render_results(results: List[Tuple[str, float]], results_per_page: int = 16):
-    """Display search results with pagination (16 images per page in 4x4 grid)"""
+def render_results(results: List[Tuple[str, float]], results_per_page: int = 8):
+    """Display search results with pagination (8 images per page in 4x2 grid)"""
     if not results:
         st.info("No results yet. Build index or adjust query.")
         return
@@ -599,6 +592,10 @@ def save_library_uploads(files: Sequence[UploadedFile]) -> List[Path]:
 
 # ===== Streamlit UI Application =====
 # Display title with last modified timestamp in top right corner
+# ===== Main App =====
+# Require login before showing any content
+require_login()
+
 col1, col2 = st.columns([3, 1])
 with col1:
     st.title("AI Image Search")
@@ -612,11 +609,21 @@ with col2:
 
 load_index_into_session()
 
+# Build navigation options based on user role
+from auth import is_admin
+
+nav_options = ["Search", "Indexing", "Metadata", "Library"]
+if is_admin():
+    nav_options.append("User Admin")
+
 view_mode = st.sidebar.radio(
     "Navigation",
-    ["Search", "Indexing", "Metadata", "Library"],
+    nav_options,
     index=0,
 )
+
+# Show logout button
+show_logout_button()
 
 # Display AI models information at bottom of sidebar
 st.sidebar.divider()
@@ -846,13 +853,13 @@ if view_mode == "Indexing":
                         # Normalize path
                         norm_path = normalize_path_key(img_path_str)
                         
-                        # Use AI-suggested caption or PDF filename
+                        # Save to database
+                        save_metadata(norm_path, caption, keywords_list)
                         metadata[norm_path] = {
                             "caption": caption,
                             "keywords": keywords_list
                         }
                 
-                save_metadata_file(metadata)
                 st.session_state["metadata"] = metadata
                 
                 # Clean up temporary data
@@ -1136,15 +1143,23 @@ elif view_mode == "Metadata":
             kw_default = ", ".join(current_meta.get("keywords", []))
             new_keywords = st.text_input("Keywords (comma-separated)", value=kw_default)
             if st.button("Save metadata"):
-                md = load_all_metadata()
-                md[edit_choice] = {"caption": new_caption, "keywords": [k.strip() for k in new_keywords.split(",") if k.strip()]}
-                save_metadata_file(md)
-                st.session_state["metadata"] = md
-                st.success("Saved metadata for selected image.")
+                keywords_list = [k.strip() for k in new_keywords.split(",") if k.strip()]
+                # Save to database
+                if save_metadata(edit_choice, new_caption, keywords_list):
+                    # Reload metadata from database
+                    st.session_state["metadata"] = load_all_metadata()
+                    st.success("Saved metadata for selected image.")
+                else:
+                    st.error("Failed to save metadata.")
         else:
             st.info("Select an image to view and edit its metadata.")
     else:
         st.info("No indexed images to edit. Run a sync first in Indexing.")
+
+elif view_mode == "User Admin":
+    # User administration (admin only)
+    from user_admin import show_user_management
+    show_user_management()
 
 else:
     # Search mode (default)

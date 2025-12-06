@@ -9,3 +9,4 @@ PyPDF2
 PyMuPDF
 pdf2image
 requests
+python-dotenv
