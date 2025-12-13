@@ -1,0 +1,3 @@
+# Database packages (install when ready to migrate)
+psycopg2-binary
+pgvector

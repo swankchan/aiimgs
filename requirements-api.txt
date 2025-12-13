@@ -1,0 +1,23 @@
+# FastAPI + Next.js Backend Requirements
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+pyjwt==2.8.0
+python-dotenv==1.0.0
+
+# Original requirements
+pillow
+numpy
+torch
+torchvision
+open_clip_torch
+faiss-cpu
+PyPDF2
+PyMuPDF
+pdf2image
+requests
+
+# Database
+psycopg2-binary

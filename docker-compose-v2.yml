@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15
+    container_name: aiimgs_db
+    environment:
+      POSTGRES_DB: aiimgs
+      POSTGRES_USER: aiimgs_user
+      POSTGRES_PASSWORD: aiimgs_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiimgs_user -d aiimgs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: aiimgs_api
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./images:/app/images
+      - ./catalog:/app/catalog
+      - ./metadata-files:/app/metadata-files
+      - ./config.json:/app/config.json
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://aiimgs_user:aiimgs_password@db:5432/aiimgs
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aiimgs_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
